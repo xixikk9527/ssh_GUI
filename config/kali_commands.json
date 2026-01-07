@@ -1,0 +1,52 @@
+[
+  {
+    "category": "网络扫描",
+    "command": "nmap -sV -sC -O <target_ip>",
+    "description": "使用Nmap进行全面的主机发现、服务版本检测和操作系统识别"
+  },
+  {
+    "category": "网络扫描",
+    "command": "netdiscover -r <ip_range>",
+    "description": "扫描局域网内的活动主机 (例如: 192.168.1.0/24)"
+  },
+  {
+    "category": "Web安全",
+    "command": "nikto -h <url>",
+    "description": "扫描Web服务器的常见漏洞和配置错误"
+  },
+  {
+    "category": "Web安全",
+    "command": "sqlmap -u <url> --dbs",
+    "description": "自动化检测和利用SQL注入漏洞，列出数据库"
+  },
+  {
+    "category": "Web安全",
+    "command": "gobuster dir -u <url> -w /usr/share/wordlists/dirb/common.txt",
+    "description": "暴力破解网站目录和文件"
+  },
+  {
+    "category": "密码破解",
+    "command": "hydra -l <user> -P <wordlist> <ip> ssh",
+    "description": "使用字典暴力破解SSH登录密码"
+  },
+  {
+    "category": "密码破解",
+    "command": "john --wordlist=<wordlist> <hash_file>",
+    "description": "使用John the Ripper破解哈希密码"
+  },
+  {
+    "category": "无线攻击",
+    "command": "airmon-ng start wlan0",
+    "description": "将无线网卡开启为监听模式"
+  },
+  {
+    "category": "权限维持",
+    "command": "msfconsole",
+    "description": "启动Metasploit框架控制台"
+  },
+  {
+    "category": "系统信息",
+    "command": "uname -a",
+    "description": "查看系统内核和架构信息"
+  }
+]

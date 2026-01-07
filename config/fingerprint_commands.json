@@ -1,0 +1,106 @@
+{
+  "指纹探测": [
+    { "name": "Web技术指纹：WhatWeb基础", "command": "whatweb -a 1 <url>" },
+    { "name": "Web技术指纹：WhatWeb深入(等级3)", "command": "whatweb -a 3 -v <url>" },
+    { "name": "Web技术指纹：批量URL文件", "command": "whatweb -a 3 -l urls.txt -v" },
+    { "name": "Web技术指纹：输出JSON", "command": "whatweb -a 3 -v <url> --log-json out.json" },
+    { "name": "Web技术指纹：指定插件目录", "command": "whatweb -a 3 --plugins-dir /usr/share/whatweb/plugins <url>" },
+    { "name": "Web技术指纹：代理/自定义头", "command": "whatweb -a 3 --proxy http://127.0.0.1:8080 --header \"X-Test: 1\" <url>" },
+    { "name": "Web技术指纹：忽略重定向", "command": "whatweb -a 3 --skip-redirect <url>" },
+    { "name": "Web技术指纹：超时与重试", "command": "whatweb -a 3 --timeout 10 --max-redirects 2 <url>" },
+
+    { "name": "Web技术指纹：httpx基础检测", "command": "httpx -u <url> -tech-detect -title -status-code -server" },
+    { "name": "Web技术指纹：httpx多目标文件", "command": "httpx -l urls.txt -tech-detect -title -status-code -server -json -o httpx.json" },
+    { "name": "Web技术指纹：提取favicon哈希", "command": "httpx -u <url> -favicon -hash" },
+    { "name": "Web技术指纹：跟进重定向", "command": "httpx -u <url> -location -follow-redirects" },
+    { "name": "Web技术指纹：随机UA与CDN识别", "command": "httpx -u <url> -random-agent -cdn -websocket" },
+    { "name": "Web技术指纹：TLS详细信息", "command": "httpx -u <url> -tls-grab -cipher -probe" },
+
+    { "name": "Web技术指纹：wig单站点", "command": "wig -u <url>" },
+    { "name": "Web技术指纹：wig批量与线程", "command": "wig -l urls.txt -t 10" },
+    { "name": "Web技术指纹：wig限制结果数", "command": "wig -u <url> -n 5" },
+
+    { "name": "Web技术指纹：Wappalyzer单站点", "command": "wappalyzer <url>" },
+    { "name": "Web技术指纹：Wappalyzer批量", "command": "wappalyzer --urls-file urls.txt --quiet --json > wappa.json" },
+
+    { "name": "WAF指纹：wafw00f基础检测", "command": "wafw00f <url>" },
+    { "name": "WAF指纹：wafw00f深入与指纹", "command": "wafw00f -a -v <url>" },
+    { "name": "WAF指纹：批量检测文件", "command": "wafw00f -i urls.txt -o waf.txt" },
+
+    { "name": "TLS/SSL指纹：testssl快速", "command": "testssl.sh --fast <host>:443" },
+    { "name": "TLS/SSL指纹：testssl完整报告", "command": "testssl.sh -U --sneaky --json-pretty out.json <host>:443" },
+    { "name": "TLS/SSL指纹：testssl指定OpenSSL", "command": "testssl.sh --openssl=/usr/bin/openssl <host>:443" },
+    { "name": "TLS/SSL指纹：sslyze常规", "command": "sslyze --regular <host>:443 --json_out sslyze.json" },
+    { "name": "TLS/SSL指纹：sslscan", "command": "sslscan <host>:443 --no-failed" },
+    { "name": "TLS/SSL指纹：nmap枚举套件", "command": "nmap --script ssl-enum-ciphers -p443 <host>" },
+    { "name": "TLS/SSL指纹：OpenSSL握手信息", "command": "openssl s_client -connect <host>:443 -servername <host> -showcerts" },
+
+    { "name": "服务/版本指纹：amap探测", "command": "amap -v <host> 1-65535" },
+    { "name": "服务/版本指纹：amap精确服务", "command": "amap -A <host> 80,443,21,22,25,110,143,3306,6379" },
+    { "name": "服务/版本指纹：nmap版本识别", "command": "nmap -sV --version-all <host>" },
+    { "name": "服务/版本指纹：nmap激进指纹", "command": "nmap -A -T4 <host>" },
+    { "name": "服务/版本指纹：Naabu快速端口+httpx技术", "command": "naabu -host <host> -top-ports 1000 -rate 10000 -json -o ports.json && jq -r '.port|tostring+\":\"+.ip' ports.json | sed \"s/^/<host>:/\" | httpx -tech-detect -title -json -o tech.json" },
+    { "name": "服务/版本指纹：Masscan端口+banner", "command": "masscan <host> -p1-65535 --rate 10000 --banners -oJ masscan.json" },
+
+    { "name": "操作系统指纹：nmap OS识别", "command": "nmap -O --osscan-guess <host>" },
+    { "name": "操作系统指纹：xprobe2主动识别", "command": "xprobe2 -v -T <host>" },
+    { "name": "操作系统指纹：p0f被动识别(接口)", "command": "p0f -i <iface> -p -vv" },
+    { "name": "操作系统指纹：p0f嗅探pcap", "command": "p0f -r capture.pcap -vv" },
+    { "name": "操作系统指纹：sinfp3识别", "command": "sinfp3 -i <host> -vv" },
+
+    { "name": "HTTP服务器指纹：头与Banner", "command": "curl -I -s <url>" },
+    { "name": "HTTP服务器指纹：nmap http-headers", "command": "nmap --script http-headers -p80,443 <host>" },
+    { "name": "HTTP服务器指纹：http-title与Server", "command": "nmap --script http-title -p80,443 <host>" },
+
+    { "name": "SSH指纹：ssh-audit", "command": "ssh-audit <host>" },
+    { "name": "SSH指纹：nmap ssh2协议", "command": "nmap --script ssh2-enum-algos -p22 <host>" },
+
+    { "name": "RDP指纹：加密信息", "command": "nmap --script rdp-enum-encryption -p3389 <host>" },
+    { "name": "RDP指纹：rdp-sec-check", "command": "rdp-sec-check <host>" },
+
+    { "name": "SMB指纹：基础枚举", "command": "enum4linux-ng -A <host>" },
+    { "name": "SMB指纹：共享与权限", "command": "smbmap -H <host> -u <user> -p <pass>" },
+    { "name": "SMB指纹：匿名列举共享", "command": "smbclient -L //<host>/ -N" },
+    { "name": "SMB指纹：OS与域信息", "command": "nmap --script smb-os-discovery -p445 <host>" },
+
+    { "name": "SNMP指纹：通用walk", "command": "snmpwalk -v2c -c public <host>" },
+    { "name": "SNMP指纹：服务信息脚本", "command": "nmap --script snmp-info -p161 <host>" },
+    { "name": "SNMP指纹：snmp-check", "command": "snmp-check -p 161 -c public <host>" },
+
+    { "name": "NetBIOS指纹：nbtscan", "command": "nbtscan -r <cidr>" },
+
+    { "name": "SIP指纹：sipvicious扫描", "command": "svmap <cidr>" },
+    { "name": "SIP指纹：sipvicious枚举", "command": "svwar -e 100-200 <host>" },
+
+    { "name": "IKE/IPsec指纹：ike-scan横幅", "command": "ike-scan --banner <host>" },
+    { "name": "IKE/IPsec指纹：模式与算法", "command": "ike-scan -M -A <host>" },
+
+    { "name": "数据库服务指纹：MySQL信息", "command": "nmap --script mysql-info -p3306 <host>" },
+    { "name": "数据库服务指纹：PostgreSQL版本", "command": "nmap -sV -p5432 <host>" },
+    { "name": "数据库服务指纹：MSSQL信息", "command": "nmap -sV -p1433 --script ms-sql-info <host>" },
+    { "name": "数据库服务指纹：Redis信息", "command": "nmap --script redis-info -p6379 <host>" },
+    { "name": "数据库服务指纹：MongoDB信息", "command": "nmap --script mongodb-databases -p27017 <host>" },
+
+    { "name": "邮件服务指纹：SMTP特性", "command": "swaks --server <host> --ehlo <domain> --timeout 5" },
+    { "name": "邮件服务指纹：POP3/IMAP版本", "command": "ncat -v -w2 <host> 110 && ncat -v -w2 <host> 143" },
+
+    { "name": "目录与CMS指纹：WhatWeb+CMS", "command": "whatweb -a 3 <url> --log-json cms.json" },
+    { "name": "CMS指纹：CMSeek扫描", "command": "cmseek -u <url> --batch" },
+    { "name": "CMS指纹：CMSmap多引擎", "command": "cmsmap <url> -f -o cmsmap.txt" },
+    { "name": "CMS指纹：Droopescan", "command": "droopescan scan drupal -u <url> -t 5" },
+    { "name": "CMS指纹：WPScan(需API)", "command": "wpscan --url <url> --api-token <token> --enumerate vt,tt,cb" },
+
+    { "name": "DNS指纹：dnsenum", "command": "dnsenum <domain> --enum" },
+    { "name": "DNS指纹：dnsrecon", "command": "dnsrecon -d <domain> -t std" },
+    { "name": "DNS指纹：fierce", "command": "fierce -dns <domain>" },
+
+    { "name": "网络指纹：ARP扫描厂商识别", "command": "arp-scan -l --interface <iface>" },
+    { "name": "网络指纹：Netdiscover被动探测", "command": "netdiscover -i <iface> -p" },
+
+    { "name": "Banner抓取：通用端口Banner", "command": "ncat -v -w1 <host> <port>" },
+    { "name": "Banner抓取：HTTP/HTTPS头", "command": "curl -I -k -s https://<host>" },
+
+    { "name": "CDN与真实IP指纹：httpx", "command": "httpx -u <url> -cdn -random-agent -ip" },
+    { "name": "前端框架指纹：Wappalyzer/WhatWeb联合", "command": "wappalyzer <url> && whatweb -a 3 <url>" }
+  ]
+}

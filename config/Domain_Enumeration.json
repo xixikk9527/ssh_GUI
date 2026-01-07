@@ -1,0 +1,84 @@
+{
+  "域名信息收集": [
+    {
+      "name": "基础DNS枚举（使用dnsenum）",
+      "command": "dnsenum <domain>"
+    },
+    {
+      "name": "快速子域名枚举（使用sublist3r）",
+      "command": "sublist3r -d <domain> -o subdomains.txt"
+    },
+    {
+      "name": "高级子域名枚举（使用amass，多源数据）",
+      "command": "amass enum -d <domain> -o amass_output.txt"
+    },
+    {
+      "name": "从互联网收集域名（使用assetfinder）",
+      "command": "assetfinder --subs-only <domain> | sort -u > assetfinder.txt"
+    },
+    {
+      "name": "快速子域名扫描（使用findomain）",
+      "command": "findomain -t <domain> -q -u findomain_output.txt"
+    },
+    {
+      "name": "DNS服务枚举（使用dnsrecon）",
+      "command": "dnsrecon -d <domain> -a -t std | tee dnsrecon_output.txt"
+    },
+    {
+      "name": "收集邮箱和子域名（使用theHarvester）",
+      "command": "theHarvester -d <domain> -b all -n -s -t -v | tee theHarvester_output.txt"
+    },
+    {
+      "name": "子域名暴力破解（使用gobuster）",
+      "command": "gobuster dns -d <domain> -w /usr/share/wordlists/subdomains-top1million-5000.txt -o gobuster_output.txt -q"
+    },
+    {
+      "name": "高性能DNS查询（使用massdns）",
+      "command": "massdns -r /usr/share/wordlists/resolvers.txt -o S -w massdns_output.txt <domain>"
+    },
+    {
+      "name": "基础DNS查询（使用dnsmap）",
+      "command": "dnsmap <domain> -d 100 -r"
+    },
+    {
+      "name": "查询域名注册信息（使用whois）",
+      "command": "whois <domain> | grep -E 'Registrar|Name Server|Expiration Date'"
+    },
+    {
+      "name": "证书透明度日志查询（通过crt.sh API）",
+      "command": "curl \"https://crt.sh/?q=<domain>&output=json\" | jq -r '.[].name_value' | sort -u > crtsh_output.txt"
+    },
+    {
+      "name": "Shodan域名信息查询（需API Key）",
+      "command": "shodan host <domain> --fields=hostnames,ports | grep -E 'hostnames|ports'"
+    },
+    {
+      "name": "子域名枚举（使用subfinder）",
+      "command": "subfinder -d <domain> -silent -o subfinder_output.txt"
+    },
+    {
+      "name": "DNS解析验证（使用dnsx）",
+      "command": "dnsx -d <domain> -silent -resp -o dnsx_output.txt"
+    },
+    {
+      "name": "历史URL收集（使用waybackurls）",
+      "command": "waybackurls <domain> | grep -v 'http' | sort -u > waybackurls_output.txt"
+    },
+    {
+      "name": "活跃域名收集（使用gau）",
+      "command": "gau <domain> | grep -v 'http' | sort -u > gau_output.txt"
+    },
+    {
+      "name": "证书信息收集（使用certspotter）",
+      "command": "certspotter -d <domain> | tee certspotter_output.txt"
+    },
+    {
+      "name": "DNS区域传输测试（使用dnsrecon）",
+      "command": "dnsrecon -d <domain> -t axfr -o axfr_output.txt"
+    },
+    {
+      "name": "子域名与端口组合扫描（使用httpx+subfinder）",
+      "command": "subfinder -d <domain> -silent | httpx -ports 80,443,8080 -silent -o live_subdomains.txt"
+    }
+  ]
+}

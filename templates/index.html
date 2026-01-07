@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Web SSH Platform</title>
+    <!-- Local Static Resources -->
+    <link rel="stylesheet" href="/static/xterm.css" />
+    <script src="/static/xterm.js"></script>
+    <script src="/static/addon-fit.js"></script>
+    <!-- CDN Resources -->
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #1e1e1e;
+            --sidebar-bg: #252526;
+            --item-hover: #2a2d2e;
+            --accent: #007acc;
+            --text-color: #cccccc;
+            --border-color: #333;
+        }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; background: var(--bg-color); color: var(--text-color); overflow: hidden; }
+        
+        /* Utility */
+        .hidden { display: none !important; }
+        .flex { display: flex; }
+        .flex-col { display: flex; flex-direction: column; }
+        .h-full { height: 100%; }
+        .w-full { width: 100%; }
+        
+        /* Views */
+        .view-container { width: 100%; height: 100%; display: none; }
+        .view-container.active { display: flex; }
+
+        /* Home View */
+        #view-home { justify-content: center; align-items: center; gap: 40px; }
+        .card {
+            width: 200px; height: 150px; background: var(--sidebar-bg); border: 1px solid var(--border-color);
+            border-radius: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; user-select: none;
+        }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.3); background: var(--item-hover); }
+        .card i { font-size: 40px; margin-bottom: 15px; color: var(--accent); }
+        .card span { font-size: 18px; font-weight: bold; }
+
+        /* SSH View */
+        #ssh-layout { display: flex; flex-direction: column; height: 100%; width: 100%; }
+        #ssh-top-bar { padding: 8px; background: var(--sidebar-bg); border-bottom: 1px solid var(--border-color); display: flex; gap: 10px; align-items: center; }
+        #cmd-input { flex: 1; padding: 6px; background: #3c3c3c; border: 1px solid #555; color: white; border-radius: 4px; }
+        #ssh-main { flex: 1; display: flex; overflow: hidden; }
+        #ssh-sidebar { width: 250px; background: var(--sidebar-bg); border-right: 1px solid var(--border-color); padding: 10px; }
+        #ssh-terminal { flex: 1; position: relative; padding: 5px; background: #000; }
+        
+        .host-info-item { padding: 10px; background: #333; border-radius: 5px; cursor: context-menu; }
+        .context-menu {
+            position: fixed; background: #252526; border: 1px solid #454545; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            z-index: 1000; min-width: 150px; padding: 5px 0; border-radius: 4px;
+        }
+        .context-menu-item { padding: 8px 15px; cursor: pointer; display: flex; gap: 8px; align-items: center; font-size: 13px; }
+        .context-menu-item:hover { background: #094771; color: white; }
+
+        /* SFTP View */
+        #sftp-layout { display: flex; flex-direction: column; height: 100%; width: 100%; }
+        #sftp-toolbar { padding: 8px; background: var(--sidebar-bg); border-bottom: 1px solid var(--border-color); display: flex; gap: 10px; align-items: center; }
+        #sftp-main { flex: 1; display: flex; overflow: hidden; }
+        #sftp-tree { width: 250px; background: var(--sidebar-bg); overflow-y: auto; border-right: 1px solid var(--border-color); }
+        #sftp-editor { flex: 1; position: relative; }
+        .file-item { padding: 4px 8px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; display: flex; align-items: center; gap: 6px; border: 1px solid transparent; }
+        .file-item:hover { background: var(--item-hover); }
+        .file-item.selected { background: #005a9e; color: white; border-color: #007acc; }
+        
+        /* Command Library View */
+        #cmd-lib-layout { display: flex; flex-direction: column; height: 100%; width: 100%; }
+        #cmd-lib-toolbar { padding: 10px; background: var(--sidebar-bg); border-bottom: 1px solid var(--border-color); display: flex; gap: 10px; align-items: center; }
+        #cmd-lib-main { flex: 1; display: flex; overflow: hidden; }
+        #cmd-category-list { width: 220px; background: var(--sidebar-bg); border-right: 1px solid var(--border-color); overflow-y: auto; display: flex; flex-direction: column; }
+        .category-header { padding: 10px; font-weight: bold; color: #888; font-size: 12px; border-bottom: 1px solid #333; text-transform: uppercase; }
+        .category-item { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #333; font-size: 14px; display: flex; align-items: center; justify-content: space-between; }
+        .category-item:hover { background: var(--item-hover); }
+        .category-item.active { background: #37373d; border-left: 3px solid var(--accent); color: white; }
+        .category-count { background: #444; color: #ccc; font-size: 10px; padding: 2px 6px; border-radius: 10px; }
+        
+        #cmd-list { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; background: #1e1e1e; }
+        .cmd-card { background: #2d2d2d; padding: 0; border-radius: 6px; border: 1px solid #3e3e3e; display: flex; flex-direction: column; overflow: hidden; }
+        .cmd-card:hover { border-color: var(--accent); }
+        .cmd-header { background: #252526; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #3e3e3e; }
+        .cmd-code { font-family: 'Consolas', 'Monaco', monospace; color: #4ec9b0; font-size: 13px; font-weight: bold; }
+        .cmd-body { padding: 12px; font-size: 13px; color: #ccc; line-height: 1.4; }
+        .cmd-actions { display: flex; gap: 8px; }
+        .cmd-btn { background: #333; border: none; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+        .cmd-btn:hover { background: #444; }
+
+        /* Login Modal */
+        #login-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8);
+            z-index: 9999; display: flex; justify-content: center; align-items: center;
+        }
+        .login-box { background: #252526; padding: 30px; border-radius: 8px; width: 300px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .login-box h2 { margin-top: 0; text-align: center; color: white; }
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; margin-bottom: 5px; font-size: 12px; }
+        .input-group input { width: 100%; padding: 8px; background: #3c3c3c; border: 1px solid #3c3c3c; color: white; border-radius: 4px; box-sizing: border-box; }
+        button.btn-primary { width: 100%; padding: 10px; background: var(--accent); border: none; color: white; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button.btn-primary:hover { background: #0062a3; }
+        button { cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <!-- Views -->
+    
+    <!-- 1. Home View -->
+    <div id="view-home" class="view-container active">
+        <div class="card" ondblclick="handleHomeAction('ssh')">
+            <i class="fa-solid fa-terminal"></i>
+            <span>SSH Terminal</span>
+        </div>
+        <div class="card" ondblclick="handleHomeAction('doc')">
+            <i class="fa-solid fa-file-word"></i>
+            <span>Documents</span>
+        </div>
+    </div>
+
+    <!-- 2. SSH View -->
+    <div id="view-ssh" class="view-container">
+        <div id="ssh-layout">
+            <div id="ssh-top-bar">
+                <button onclick="switchView('home')" title="Back Home" style="background:none; border:none; color:white;"><i class="fa-solid fa-home"></i></button>
+                <input type="text" id="cmd-input" placeholder="Enter command and press Enter to execute...">
+            </div>
+            <div id="ssh-main">
+                <div id="ssh-sidebar">
+                    <div style="font-size:12px; color:#888; margin-bottom:10px;">HOST INFO (Right Click)</div>
+                    <div id="host-info-card" class="host-info-item" oncontextmenu="showContextMenu(event)">
+                        <div id="host-display-ip" style="font-weight:bold; color:white;">Not Connected</div>
+                        <div id="host-display-user" style="font-size:12px; color:#aaa;"></div>
+                        <div style="margin-top:5px; font-size:11px; color:#666;">Double click Home card to connect</div>
+                    </div>
+                </div>
+                <div id="ssh-terminal">
+                    <div id="terminal-container" style="width:100%; height:100%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. SFTP View -->
+    <div id="view-sftp" class="view-container">
+        <div id="sftp-layout">
+            <div id="sftp-toolbar">
+                <button onclick="switchView('ssh')" style="background:none; border:none; color:white;"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                <div style="flex:1; display:flex; justify-content:center; gap:10px;">
+                    <input type="text" id="sftp-search" placeholder="Search files (recursive)..." style="padding:5px; background:#333; border:1px solid #555; color:white; width:250px; border-radius:4px;">
+                    <button onclick="sftpSearch()" style="background:#444; border:none; color:white; padding:5px 10px; border-radius:4px;"><i class="fa-solid fa-search"></i></button>
+                </div>
+                <span id="sftp-path" style="margin-right:10px; font-size:13px; color:#aaa; max-width:200px; overflow:hidden; white-space:nowrap;">/</span>
+                <button onclick="saveFile()" class="btn-primary" style="width:auto; padding:5px 15px;"><i class="fa-solid fa-save"></i> Save</button>
+            </div>
+            <div id="sftp-main">
+                <div id="sftp-tree"></div>
+                <div id="sftp-editor"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Command Library View -->
+    <div id="view-commands" class="view-container">
+        <div id="cmd-lib-layout">
+            <div id="cmd-lib-toolbar">
+                <button onclick="switchView('ssh')" style="background:none; border:none; color:white;"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                <div style="flex:1; display:flex; justify-content:center;">
+                    <input type="text" id="cmd-search" placeholder="Search commands..." onkeyup="filterCommands(this.value)" style="padding:5px; background:#333; border:1px solid #555; color:white; width:300px; border-radius:4px;">
+                </div>
+            </div>
+            <div id="cmd-lib-main">
+                <div id="cmd-category-list"></div>
+                <div id="cmd-list"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Doc View (Placeholder) -->
+    <div id="view-doc" class="view-container">
+        <div style="width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+            <h2 style="color:white;">Document Processing</h2>
+            <p>Feature coming soon...</p>
+            <button onclick="switchView('home')" class="btn-primary" style="width:auto; margin-top:20px;">Back Home</button>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div id="context-menu" class="context-menu hidden">
+        <div class="context-menu-item" onclick="handleMenu('sftp')"><i class="fa-solid fa-folder"></i> SFTP Manager</div>
+        <div class="context-menu-item" onclick="handleMenu('commands')"><i class="fa-solid fa-book"></i> Command Library</div>
+    </div>
+
+    <!-- Login Overlay -->
+    <div id="login-overlay" class="hidden">
+        <div class="login-box">
+            <h2>SSH Login</h2>
+            <div class="input-group"><label>Host</label><input type="text" id="login-host" placeholder="192.168.1.1"></div>
+            <div class="input-group"><label>Port</label><input type="number" id="login-port" value="22"></div>
+            <div class="input-group"><label>User</label><input type="text" id="login-user" placeholder="root"></div>
+            <div class="input-group"><label>Pass</label><input type="password" id="login-pass"></div>
+            <button class="btn-primary" onclick="connectSSH()">Connect</button>
+            <button onclick="document.getElementById('login-overlay').classList.add('hidden')" style="width:100%; margin-top:10px; background:none; border:none; color:#888; cursor:pointer;">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        // Global State
+        let session_id = null;
+        let term, socket, fitAddon;
+        let editor;
+        let currentSftpPath = ".";
+        let currentEditingFile = null;
+        let allCommands = [];
+
+        // --- Init ---
+        document.addEventListener('DOMContentLoaded', async () => {
+            initTerminal();
+            loadHistory(); // Try to auto-load history
+            
+            // Monaco Init
+            require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' }});
+            require(['vs/editor/editor.main'], function() {
+                editor = monaco.editor.create(document.getElementById('sftp-editor'), {
+                    value: "// Select a file to edit...",
+                    language: 'plaintext',
+                    theme: 'vs-dark',
+                    automaticLayout: true
+                });
+                editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, saveFile);
+            });
+
+            // Global click to hide context menu
+            document.addEventListener('click', () => document.getElementById('context-menu').classList.add('hidden'));
+            
+            // Cmd input enter
+            document.getElementById('cmd-input').addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    const cmd = e.target.value;
+                    if (cmd && socket && socket.readyState === WebSocket.OPEN) {
+                        socket.send(cmd + '\n');
+                        term.focus();
+                        e.target.value = '';
+                    }
+                }
+            });
+        });
+
+        // --- View Manager ---
+        function switchView(viewName) {
+            document.querySelectorAll('.view-container').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.getElementById('view-' + viewName).classList.add('active');
+            
+            if (viewName === 'ssh' && fitAddon) {
+                // Ensure terminal fits the container after view switch
+                setTimeout(() => { 
+                    fitAddon.fit(); 
+                    term.focus(); 
+                    sendResize();
+                }, 100);
+            }
+            if (viewName === 'commands') {
+                loadCommands();
+            }
+            if (viewName === 'sftp') {
+                // Initial load if first time
+                if (document.getElementById('sftp-tree').innerHTML === '') {
+                    refreshFileTree(currentSftpPath);
+                }
+            }
+        }
+
+        function handleHomeAction(action) {
+            if (action === 'ssh') {
+                if (!session_id) {
+                    showLogin();
+                } else {
+                    switchView('ssh');
+                }
+            } else if (action === 'doc') {
+                switchView('doc');
+            }
+        }
+
+        // --- SSH & Terminal ---
+        function initTerminal() {
+            if (typeof Terminal === 'undefined') {
+                // alert("xterm.js failed to load!"); return;
+                console.error("xterm.js failed to load");
+                return;
+            }
+            term = new Terminal({
+                cursorBlink: true, fontSize: 14, fontFamily: 'Menlo, Monaco, monospace',
+                theme: { background: '#000000' }
+            });
+            
+            // FitAddon Logic
+            let FitAddonClass;
+            if (typeof FitAddon === 'object' && FitAddon.FitAddon) FitAddonClass = FitAddon.FitAddon;
+            else if (typeof FitAddon === 'function') FitAddonClass = FitAddon;
+            else { console.error("FitAddon missing"); return; }
+
+            fitAddon = new FitAddonClass();
+            term.loadAddon(fitAddon);
+            term.open(document.getElementById('terminal-container'));
+            fitAddon.fit();
+            
+            new ResizeObserver(() => {
+                try { fitAddon.fit(); sendResize(); } catch(e){}
+            }).observe(document.getElementById('terminal-container'));
+            
+            term.onData(data => {
+                if (socket && socket.readyState === WebSocket.OPEN) socket.send(data);
+            });
+        }
+
+        async function loadHistory() {
+            try {
+                const res = await fetch('/api/history');
+                const data = await res.json();
+                if (data.hostname) {
+                    document.getElementById('login-host').value = data.hostname;
+                    document.getElementById('login-user').value = data.username;
+                    document.getElementById('login-pass').value = data.password;
+                    document.getElementById('login-port').value = data.port || 22;
+                    // Auto connect? Maybe better to let user double click.
+                    // But we update host info so user knows what will be connected.
+                    updateHostInfo(data);
+                }
+            } catch (e) {}
+        }
+
+        function showLogin() {
+            document.getElementById('login-overlay').classList.remove('hidden');
+        }
+
+        async function connectSSH() {
+            const host = document.getElementById('login-host').value;
+            const user = document.getElementById('login-user').value;
+            const pass = document.getElementById('login-pass').value;
+            const port = document.getElementById('login-port').value;
+
+            if(!host || !user || !pass) { alert("Please fill all fields"); return; }
+
+            const btn = document.querySelector('#login-overlay .btn-primary');
+            const originalText = btn.innerText;
+            btn.innerText = "Connecting...";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/connect', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ hostname: host, username: user, password: pass, port: parseInt(port) })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    session_id = data.session_id;
+                    document.getElementById('login-overlay').classList.add('hidden');
+                    
+                    // Save history
+                    fetch('/api/history', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ hostname: host, username: user, password: pass, port: parseInt(port) })
+                    });
+
+                    updateHostInfo({hostname: host, username: user});
+                    startWebSocket();
+                    switchView('ssh');
+                } else {
+                    alert("Connection failed: " + data.detail);
+                }
+            } catch (e) { alert("Error: " + e.message); }
+            finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function startWebSocket() {
+            if (socket) {
+                socket.close();
+            }
+            term.reset();
+            const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+            socket = new WebSocket(`${protocol}://${window.location.host}/ws/ssh/${session_id}`);
+            socket.onopen = () => { 
+                term.write('\r\n\x1b[32mConnected to ' + document.getElementById('host-display-ip').innerText + '...\x1b[0m\r\n'); 
+                sendResize(); 
+            };
+            socket.onmessage = (e) => term.write(e.data);
+            socket.onclose = () => term.write('\r\n\x1b[31mConnection Closed.\x1b[0m\r\n');
+            socket.onerror = () => term.write('\r\n\x1b[31mWebSocket Error.\x1b[0m\r\n');
+        }
+
+        function sendResize() {
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ type: 'resize', cols: term.cols, rows: term.rows }));
+            }
+        }
+
+        function updateHostInfo(info) {
+            document.getElementById('host-display-ip').innerText = info.hostname;
+            document.getElementById('host-display-user').innerText = info.username;
+        }
+
+        // --- Context Menu ---
+        function showContextMenu(e) {
+            e.preventDefault();
+            if (!session_id) return;
+            const menu = document.getElementById('context-menu');
+            menu.style.left = e.pageX + 'px';
+            menu.style.top = e.pageY + 'px';
+            menu.classList.remove('hidden');
+        }
+
+        function handleMenu(action) {
+            if (!session_id) { alert("Please connect first!"); showLogin(); return; }
+            switchView(action);
+        }
+
+        // --- Command Library ---
+        async function loadCommands() {
+            if (allCommands.length > 0) return; // Cached
+            try {
+                const res = await fetch('/api/config/commands');
+                allCommands = await res.json();
+                renderCommands(allCommands);
+            } catch (e) { console.error(e); }
+        }
+
+        function renderCommands(commands) {
+            const categories = [...new Set(commands.map(c => c.category || 'Uncategorized'))];
+            const catContainer = document.getElementById('cmd-category-list');
+            
+            // Header
+            let html = `<div class="category-header">Categories</div>`;
+            
+            // Items
+            html += categories.map(cat => {
+                const count = commands.filter(c => (c.category || 'Uncategorized') === cat).length;
+                return `<div class="category-item" onclick="filterByCategory('${cat}')">
+                    <span>${cat}</span>
+                    <span class="category-count">${count}</span>
+                </div>`;
+            }).join('');
+            
+            catContainer.innerHTML = html;
+
+            // Render All initially
+            if (categories.length > 0) filterByCategory(categories[0]);
+        }
+
+        function filterByCategory(cat) {
+            document.querySelectorAll('.category-item').forEach(el => {
+                const isActive = el.querySelector('span').innerText === cat;
+                el.classList.toggle('active', isActive);
+            });
+            const filtered = allCommands.filter(c => (c.category || 'Uncategorized') === cat);
+            renderCommandList(filtered);
+        }
+
+        function filterCommands(query) {
+            if (!query) {
+                const activeCat = document.querySelector('.category-item.active');
+                if (activeCat) filterByCategory(activeCat.querySelector('span').innerText);
+                else if (allCommands.length > 0) renderCommandList(allCommands);
+                return;
+            }
+            const filtered = allCommands.filter(c => 
+                c.command.toLowerCase().includes(query.toLowerCase()) || 
+                c.description.toLowerCase().includes(query.toLowerCase())
+            );
+            renderCommandList(filtered);
+        }
+
+        function renderCommandList(list) {
+            const container = document.getElementById('cmd-list');
+            container.innerHTML = list.map(cmd => {
+                const safeCmd = cmd.command.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                return `
+                <div class="cmd-card">
+                    <div class="cmd-header">
+                        <div class="cmd-code">${cmd.command}</div>
+                        <div class="cmd-actions">
+                            <button class="cmd-btn" onclick="copyCommand('${safeCmd}')" title="Copy"><i class="fa-solid fa-copy"></i></button>
+                            <button class="cmd-btn" onclick="executeCommand('${safeCmd}')" title="Run"><i class="fa-solid fa-play"></i> Run</button>
+                        </div>
+                    </div>
+                    <div class="cmd-body">${cmd.description}</div>
+                </div>
+            `}).join('');
+        }
+
+        function executeCommand(cmd) {
+            switchView('ssh');
+            const input = document.getElementById('cmd-input');
+            input.value = cmd;
+            input.focus();
+        }
+        
+        function copyCommand(cmd) {
+            navigator.clipboard.writeText(cmd).then(() => {
+                // alert("Copied!");
+            });
+        }
+
+        // --- SFTP ---
+        let selectedFileElement = null;
+
+        function selectFileElement(el) {
+            if (selectedFileElement) selectedFileElement.classList.remove('selected');
+            selectedFileElement = el;
+            el.classList.add('selected');
+        }
+
+        function getParentPath(path) {
+            if (!path || path === '/' || path === '.') return '/';
+            // Remove trailing slash if present (except root)
+            if (path.length > 1 && path.endsWith('/')) path = path.slice(0, -1);
+            
+            const lastSlashIndex = path.lastIndexOf('/');
+            if (lastSlashIndex <= 0) return '/'; // Parent of /foo is /
+            return path.substring(0, lastSlashIndex);
+        }
+
+        async function refreshFileTree(path) {
+            if (!session_id) return;
+            const container = document.getElementById('sftp-tree');
+            container.innerHTML = '<div style="padding:10px; color:#aaa;">Loading...</div>';
+            try {
+                const res = await fetch(`/api/files/list?session_id=${session_id}&path=${encodeURIComponent(path)}`);
+                const data = await res.json();
+                currentSftpPath = data.current_path;
+                document.getElementById('sftp-path').innerText = currentSftpPath;
+                
+                container.innerHTML = '';
+                if (currentSftpPath !== '/' && currentSftpPath !== '.') {
+                    const upEl = document.createElement('div');
+                    upEl.className = 'file-item';
+                    upEl.innerHTML = `<i class="fa-solid fa-arrow-up"></i> ..`;
+                    upEl.ondblclick = () => refreshFileTree(getParentPath(currentSftpPath));
+                    container.appendChild(upEl);
+                }
+                
+                data.files.forEach(f => {
+                    const el = document.createElement('div');
+                    el.className = 'file-item';
+                    el.innerHTML = `<i class="fa-solid ${f.is_dir ? 'fa-folder' : 'fa-file'}"></i> ${f.name}`;
+                    
+                    // Single click select
+                    el.onclick = () => selectFileElement(el);
+                    
+                    // Double click action
+                    el.ondblclick = () => {
+                        if (f.is_dir) refreshFileTree(currentSftpPath + '/' + f.name);
+                        else openFile(currentSftpPath + '/' + f.name);
+                    };
+                    
+                    container.appendChild(el);
+                });
+            } catch (e) { container.innerHTML = '<div style="padding:10px; color:red;">Error loading files</div>'; }
+        }
+
+        async function openFile(path) {
+            try {
+                const res = await fetch(`/api/files/content?session_id=${session_id}&path=${encodeURIComponent(path)}`);
+                if (!res.ok) {
+                    const err = await res.json();
+                    alert(err.detail); return;
+                }
+                const data = await res.json();
+                currentEditingFile = path;
+                editor.setValue(data.content);
+            } catch (e) { alert("Failed to open file (Network Error)"); }
+        }
+
+        async function saveFile() {
+            if (!currentEditingFile) return;
+            try {
+                await fetch('/api/files/save', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ session_id, path: currentEditingFile, content: editor.getValue() })
+                });
+                alert("Saved successfully!");
+            } catch (e) { alert("Save failed"); }
+        }
+
+        async function sftpSearch() {
+            const query = document.getElementById('sftp-search').value;
+            if (!query) return;
+            const container = document.getElementById('sftp-tree');
+            container.innerHTML = '<div style="padding:10px;">Searching...</div>';
+            
+            try {
+                const res = await fetch(`/api/files/search?session_id=${session_id}&path=${encodeURIComponent(currentSftpPath)}&query=${encodeURIComponent(query)}`);
+                const results = await res.json();
+                
+                container.innerHTML = `<div style="padding:5px; font-weight:bold; border-bottom:1px solid #333;">Search Results: "${query}"</div>`;
+                
+                results.forEach(f => {
+                    const el = document.createElement('div');
+                    el.className = 'file-item';
+                    el.innerHTML = `<i class="fa-solid ${f.is_dir ? 'fa-folder' : 'fa-file'}"></i> ${f.name}`;
+                    el.title = f.path;
+                    
+                    // Single click select
+                    el.onclick = () => selectFileElement(el);
+                    
+                    // Double click action
+                    el.ondblclick = () => {
+                        if (f.is_dir) refreshFileTree(f.path);
+                        else openFile(f.path);
+                    };
+                    
+                    container.appendChild(el);
+                });
+                
+                if (results.length === 0) container.innerHTML += '<div style="padding:5px;">No results found</div>';
+                
+                const clearEl = document.createElement('div');
+                clearEl.className = 'file-item';
+                clearEl.style.marginTop = '10px';
+                clearEl.style.color = '#aaa';
+                clearEl.innerHTML = '<i class="fa-solid fa-times"></i> Clear Search';
+                clearEl.onclick = () => refreshFileTree(currentSftpPath);
+                container.appendChild(clearEl);
+                
+            } catch (e) { alert("Search failed"); }
+        }
+
+    </script>
+</body>
+</html>
