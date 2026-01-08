@@ -1,0 +1,55 @@
+{
+  "Web目录枚举": [
+    { "name": "Gobuster：基础扫描", "command": "gobuster dir -u <url> -w <wordlist.txt> -t 30" },
+    { "name": "Gobuster：扩展名枚举", "command": "gobuster dir -u <url> -w <wordlist.txt> -x php,asp,aspx,jsp,html,txt" },
+    { "name": "Gobuster：状态码匹配", "command": "gobuster dir -u <url> -w <wordlist.txt> -s 200,204,301,302,307,401,403" },
+    { "name": "Gobuster：黑名单状态码", "command": "gobuster dir -u <url> -w <wordlist.txt> -b 404,400,500" },
+    { "name": "Gobuster：重定向与证书", "command": "gobuster dir -u <url> -w <wordlist.txt> -r -k" },
+    { "name": "Gobuster：Header/Cookie/代理", "command": "gobuster dir -u <url> -w <wordlist.txt> -H \"X-Forwarded-For: 127.0.0.1\" -c \"sid=abc\" -p http://127.0.0.1:8080" },
+    { "name": "Gobuster：JSON输出", "command": "gobuster dir -u <url> -w <wordlist.txt> -o gobuster.json -f -q" },
+    { "name": "Dirsearch：基础扫描", "command": "dirsearch -u <url> -w <wordlist.txt> -t 30" },
+    { "name": "Dirsearch：扩展与过滤", "command": "dirsearch -u <url> -w <wordlist.txt> -e php,asp,aspx,jsp,html -x 404,400,500" },
+    { "name": "Dirsearch：状态码匹配", "command": "dirsearch -u <url> -w <wordlist.txt> -i 200,204,301,302,307,401,403" },
+    { "name": "Dirsearch：随机UA/Header", "command": "dirsearch -u <url> -w <wordlist.txt> --random-agent --header \"X-Forwarded-For: 127.0.0.1\"" },
+    { "name": "Dirsearch：递归与深度", "command": "dirsearch -u <url> -w <wordlist.txt> --recursive --recursion-depth 2" },
+    { "name": "Dirsearch：忽略跳转/超时", "command": "dirsearch -u <url> -w <wordlist.txt> --ignore-redirects --timeout 10" },
+    { "name": "Feroxbuster：基础扫描", "command": "feroxbuster -u <url> -w <wordlist.txt> -t 30" },
+    { "name": "Feroxbuster：扩展名枚举", "command": "feroxbuster -u <url> -w <wordlist.txt> -x php,asp,aspx,jsp,html,txt" },
+    { "name": "Feroxbuster：状态码匹配", "command": "feroxbuster -u <url> -w <wordlist.txt> -s 200,204,301,302,307,401,403" },
+    { "name": "Feroxbuster：忽略证书与随机UA", "command": "feroxbuster -u <url> -w <wordlist.txt> -k --random-agent" },
+    { "name": "FFUF：基础路径枚举", "command": "ffuf -u <url>/FUZZ -w <wordlist.txt> -t 50" },
+    { "name": "FFUF：扩展名枚举", "command": "ffuf -u <url>/FUZZ -w <wordlist.txt> -e .php,.asp,.aspx,.jsp,.html,.txt" },
+    { "name": "FFUF：匹配/过滤状态码", "command": "ffuf -u <url>/FUZZ -w <wordlist.txt> -mc 200,204,301,302,307,401,403 -fc 404,400,500" },
+    { "name": "WFuzz：基础路径枚举", "command": "wfuzz -u <url>/FUZZ -w <wordlist.txt>" },
+    { "name": "Dirb：基础扫描", "command": "dirb <url> <wordlist.txt> -r" },
+    { "name": "Dirb：扩展名枚举", "command": "dirb <url> <wordlist.txt> -X .php,.asp,.aspx,.jsp,.html,.txt" },
+    { "name": "Nikto：目录与敏感文件", "command": "nikto -h <url> -Tuning 1234567890" }
+  ],
+  "虚拟主机枚举": [
+    { "name": "Gobuster：VHost 枚举基础", "command": "gobuster vhost -u <url> -w <wordlist.txt> -t 50 -o vhosts.txt" },
+    { "name": "Gobuster：VHost 证书与代理", "command": "gobuster vhost -u <url> -w <wordlist.txt> -k -p http://127.0.0.1:8080" },
+    { "name": "FFUF：Host 头枚举", "command": "ffuf -u http://<host> -H \"Host: FUZZ\" -w <vhosts.txt> -mc 200,302" }
+  ],
+  "DNS枚举": [
+    { "name": "Gobuster：DNS 枚举", "command": "gobuster dns -d <domain> -w <wordlist.txt> -t 50 -o dns.txt" },
+    { "name": "dnsenum：标准枚举", "command": "dnsenum <domain> --enum" },
+    { "name": "dnsrecon：标准枚举", "command": "dnsrecon -d <domain> -t std" },
+    { "name": "fierce：子域发现", "command": "fierce -dns <domain>" }
+  ],
+  "递归策略模板": [
+    { "name": "FFUF：目录后再枚举文件", "command": "ffuf -u <url>/FUZZ/ -w <dirs.txt> -mc 200 -o dirs.json -of json && jq -r '.results[].url' dirs.json | sed 's/$/FUZZ/' | xargs -I{} ffuf -u {} -w <files.txt> -mc 200" },
+    { "name": "Feroxbuster：递归深度2", "command": "feroxbuster -u <url> -w <wordlist.txt> -r -L 2" },
+    { "name": "Dirsearch：递归深度2", "command": "dirsearch -u <url> -w <wordlist.txt> --recursive --recursion-depth 2" }
+  ],
+  "高级参数模板": [
+    { "name": "FFUF：大小/字数/行数过滤", "command": "ffuf -u <url>/FUZZ -w <wordlist.txt> -fs 0 -fw 0 -fl 0" },
+    { "name": "FFUF：多字典组合", "command": "ffuf -u <url>/FUZZ -w <wl1.txt>:FUZZ -w <wl2.txt>:FUZ2Z" },
+    { "name": "FFUF：JSON/CSV 输出", "command": "ffuf -u <url>/FUZZ -w <wordlist.txt> -o ffuf.json -of json" },
+    { "name": "Gobuster：超时与JSON", "command": "gobuster dir -u <url> -w <wordlist.txt> --timeout 10s -o gobuster.json -f -q" },
+    { "name": "Feroxbuster：静默与JSON", "command": "feroxbuster -u <url> -w <wordlist.txt> --silent -o ferox.json -E" },
+    { "name": "WFuzz：隐藏/匹配状态码", "command": "wfuzz -u <url>/FUZZ -w <wordlist.txt> --hc 404,400,500 --sc 200,204,301,302,307,401,403" },
+    { "name": "Dirb：延迟与UA", "command": "dirb <url> <wordlist.txt> -r -z 100 -a \"Mozilla/5.0\"" },
+    { "name": "清洗伪404：长度过滤", "command": "ffuf -u <url>/FUZZ -w <wordlist.txt> -fs <len_404>" },
+    { "name": "CDN/前置代理：随机UA与头", "command": "feroxbuster -u <url> -w <wordlist.txt> --random-agent -H \"X-Origin-IP: 127.0.0.1\"" }
+  ]
+}

