@@ -1,0 +1,48 @@
+    <!-- Context Menu HTML -->
+    <div id="column-context-menu" class="context-menu">
+        <div class="context-menu-item" onclick="deleteColumnAction()">
+            <i class="fa-solid fa-trash"></i> 删除列
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div id="context-menu" class="context-menu hidden">
+        <div class="context-menu-item" onclick="handleMenu('sftp')"><i class="fa-solid fa-folder"></i> SFTP 管理器</div>
+        <div class="context-menu-item" onclick="handleMenu('commands')"><i class="fa-solid fa-book"></i> 命令库</div>
+    </div>
+
+    <!-- Login Overlay -->
+    <div id="login-overlay" class="hidden">
+        <div class="login-box">
+            <h2>SSH 登录</h2>
+            <div class="input-group"><label>主机</label><input type="text" id="login-host" placeholder="192.168.1.1"></div>
+            <div class="input-group"><label>端口</label><input type="number" id="login-port" value="22"></div>
+            <div class="input-group"><label>用户</label><input type="text" id="login-user" placeholder="root"></div>
+            <div class="input-group"><label>密码</label><input type="password" id="login-pass"></div>
+            <button class="btn-primary" onclick="connectSSH()">连接</button>
+            <button onclick="document.getElementById('login-overlay').classList.add('hidden')" style="width:100%; margin-top:10px; background:none; border:none; color:#888; cursor:pointer;">取消</button>
+        </div>
+    </div>
+
+    <!-- Diff Result Preview Modal -->
+    <div id="diff-result-modal" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; display:flex; justify-content:center; align-items:center;">
+        <div style="width:90%; height:90%; background:#1e1e1e; border-radius:8px; display:flex; flex-direction:column; box-shadow:0 0 20px rgba(0,0,0,0.5);">
+            <div style="padding:15px; border-bottom:1px solid #333; display:flex; flex-direction:column; gap:10px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <span style="font-weight:bold; font-size:16px;">对比结果预览</span>
+                    <div>
+                        <button class="btn-primary" id="btn-download-diff" style="margin-right:10px;"><i class="fa-solid fa-download"></i> 下载完整结果</button>
+                        <button onclick="document.getElementById('diff-result-modal').classList.add('hidden')" style="background:none; border:none; color:#ccc; cursor:pointer; font-size:18px;"><i class="fa-solid fa-times"></i></button>
+                    </div>
+                </div>
+                <!-- Conditions Display Area -->
+                <div id="diff-result-conditions" style="display:flex; gap:10px; flex-wrap:wrap;">
+                    <!-- Conditions injected here -->
+                </div>
+            </div>
+            <div id="diff-result-table-container" style="flex:1; overflow:auto; padding:10px;">
+                <!-- Table injected here -->
+            </div>
+            <div id="diffResult-pagination" class="pagination-bar"></div>
+        </div>
+    </div>

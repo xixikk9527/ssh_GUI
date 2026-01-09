@@ -5,7 +5,18 @@
     <title>Web SSH 平台</title>
     <!-- Local Static Resources -->
     <link rel="stylesheet" href="/static/xterm.css" />
+    
+    <!-- Base Styles -->
     <link rel="stylesheet" href="/static/css/style.css" />
+    <link rel="stylesheet" href="/static/css/components.css" />
+    
+    <!-- Module Styles -->
+    <link rel="stylesheet" href="/static/css/modules/home.css" />
+    <link rel="stylesheet" href="/static/css/modules/ssh.css" />
+    <link rel="stylesheet" href="/static/css/modules/sftp.css" />
+    <link rel="stylesheet" href="/static/css/modules/commands.css" />
+    <link rel="stylesheet" href="/static/css/modules/doc.css" />
+    
     <script src="/static/xterm.js"></script>
     <script src="/static/addon-fit.js"></script>
     <!-- CDN Resources -->
@@ -13,254 +24,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
 </head>
 <body>
-    <!-- Context Menu HTML -->
-    <div id="column-context-menu" class="context-menu">
-        <div class="context-menu-item" onclick="deleteColumnAction()">
-            <i class="fa-solid fa-trash"></i> 删除列
-        </div>
-    </div>
 
-    <!-- 1. Home View -->
-    <div id="view-home" class="view-container active">
-        <div class="card" ondblclick="handleHomeAction('ssh')">
-            <i class="fa-solid fa-terminal"></i>
-            <span>SSH 终端</span>
-        </div>
-        <div class="card" ondblclick="handleHomeAction('doc')">
-            <i class="fa-solid fa-file-word"></i>
-            <span>文档工具</span>
-        </div>
-    </div>
-
-    <!-- 2. SSH View -->
-    <div id="view-ssh" class="view-container">
-        <div id="ssh-layout">
-            <div id="ssh-top-bar">
-                <button onclick="switchView('home')" title="返回主页" style="background:none; border:none; color:white; cursor:pointer;"><i class="fa-solid fa-home"></i></button>
-                <div style="width: 1px; height: 20px; background: #555; margin: 0 10px;"></div>
-                <button onclick="reconnectTerminal()" title="重新连接" style="background:none; border:none; color:#4caf50; cursor:pointer;"><i class="fa-solid fa-rotate"></i></button>
-                <button onclick="disconnectTerminal()" title="断开连接" style="background:none; border:none; color:#f44336; cursor:pointer;"><i class="fa-solid fa-plug-circle-xmark"></i></button>
-                <div style="width: 1px; height: 20px; background: #555; margin: 0 10px;"></div>
-                <input type="text" id="cmd-input" placeholder="输入命令并按回车执行...">
-            </div>
-            <div id="ssh-main">
-                <div id="ssh-sidebar">
-                    <div style="font-size:12px; color:#888; margin-bottom:10px;">主机信息 (右键点击)</div>
-                    <div id="host-info-card" class="host-info-item" oncontextmenu="showContextMenu(event)">
-                        <div id="host-display-ip" style="font-weight:bold; color:white;">未连接</div>
-                        <div id="host-display-user" style="font-size:12px; color:#aaa;"></div>
-                        <div style="margin-top:5px; font-size:11px; color:#666;">双击主页卡片进行连接</div>
-                    </div>
-                </div>
-                <div id="ssh-terminal">
-                    <div id="terminal-container" style="width:100%; height:100%;"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 3. SFTP View -->
-    <div id="view-sftp" class="view-container">
-        <div id="sftp-layout">
-            <div id="sftp-toolbar">
-                <button onclick="switchView('ssh')" style="background:none; border:none; color:white;"><i class="fa-solid fa-arrow-left"></i> 返回</button>
-                <div style="flex:1; display:flex; justify-content:center; gap:10px;">
-                    <input type="text" id="sftp-search" placeholder="搜索文件 (递归)..." style="padding:5px; background:#333; border:1px solid #555; color:white; width:250px; border-radius:4px;">
-                    <button onclick="sftpSearch()" style="background:#444; border:none; color:white; padding:5px 10px; border-radius:4px;"><i class="fa-solid fa-search"></i></button>
-                </div>
-                <span id="sftp-path" style="margin-right:10px; font-size:13px; color:#aaa; max-width:200px; overflow:hidden; white-space:nowrap;">/</span>
-                <button onclick="saveFile()" class="btn-primary" style="width:auto; padding:5px 15px;"><i class="fa-solid fa-save"></i> 保存</button>
-            </div>
-            <div id="sftp-main">
-                <div id="sftp-tree"></div>
-                <div id="sftp-editor"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 4. Command Library View -->
-    <div id="view-commands" class="view-container">
-        <div id="cmd-lib-layout">
-            <div id="cmd-lib-toolbar">
-                <button onclick="switchView('ssh')" style="background:none; border:none; color:white; font-size:16px; cursor:pointer;"><i class="fa-solid fa-arrow-left"></i> 返回</button>
-                <div style="font-weight:bold; font-size:16px; margin-left:10px;">命令库</div>
-            </div>
-            <div id="cmd-lib-main">
-                <div id="cmd-category-list">
-                    <!-- Categories will be injected here -->
-                </div>
-                <div id="cmd-list-container">
-                    <div id="cmd-list-header">
-                        <span id="cmd-current-category" style="font-weight:bold; color:white;">所有命令</span>
-                        <input type="text" id="cmd-search" placeholder="搜索命令..." onkeyup="filterCommands(this.value)" 
-                            style="padding:6px 12px; background:#333; border:1px solid #444; color:white; width:250px; border-radius:4px;">
-                    </div>
-                    <div id="cmd-list">
-                        <!-- Commands will be injected here -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 5. Doc View -->
-    <div id="view-doc" class="view-container">
-        <div id="doc-layout" style="display: flex; width: 100%; height: 100%;">
-            <!-- Doc Sidebar -->
-            <div id="doc-sidebar" style="width: 220px; background: #252526; border-right: 1px solid #333; display: flex; flex-direction: column;">
-                <div style="padding: 15px; font-weight: bold; font-size: 14px; border-bottom: 1px solid #333; display: flex; align-items: center; gap: 10px;">
-                    <button onclick="switchView('home')" style="background:none; border:none; color:white; cursor:pointer;" title="返回主页"><i class="fa-solid fa-home"></i></button>
-                    <span>文档工具</span>
-                </div>
-                <div class="doc-nav-item active" onclick="switchDocPanel('converter')"><i class="fa-solid fa-file-export"></i> 格式转换</div>
-                <div class="doc-nav-item" onclick="switchDocPanel('diff')"><i class="fa-solid fa-code-compare"></i> Excel 对比</div>
-                <div class="doc-nav-item" onclick="switchDocPanel('toolbox')"><i class="fa-solid fa-toolbox"></i> 数据工具箱</div>
-            </div>
-            
-            <!-- Doc Content Area -->
-            <div id="doc-content" style="flex: 1; position: relative; overflow: hidden; background: #1e1e1e;">
-                
-                <!-- Panel 1: Converter -->
-                <div id="doc-panel-converter" class="doc-panel active">
-                    <div class="panel-header">JSON 转 Excel 转换器</div>
-                    <div class="panel-body">
-                        <!-- Input Section -->
-                        <div id="converter-input-area" style="padding: 20px; display: flex; flex-direction: column; gap: 10px; height: 100%; justify-content: center; align-items: center;">
-                            <div style="text-align: center; color: #888; margin-bottom: 20px;">
-                                <i class="fa-solid fa-file-code" style="font-size: 48px; margin-bottom: 10px;"></i>
-                                <div>选择要转换的 JSON 文件</div>
-                            </div>
-                            <button class="btn-primary" onclick="triggerJsonUpload()" style="font-size: 16px; padding: 12px 24px;">
-                                <i class="fa-solid fa-upload"></i> 上传 JSON 文件
-                            </button>
-                            <input type="file" id="json-upload-input" style="display: none;" accept=".json" onchange="handleJsonUpload(this)">
-                        </div>
-                        
-                        <!-- Preview Section (Hidden initially) -->
-                        <div id="converter-preview-area" class="hidden" style="display: flex; flex-direction: column; height: 100%;">
-                            <div class="toolbar" style="padding: 10px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center;">
-                                <div style="display: flex; gap: 10px; align-items: center;">
-                                    <button onclick="resetConverter()" style="background:none; border:none; color:#ccc; cursor:pointer;"><i class="fa-solid fa-arrow-left"></i> 返回</button>
-                                    <span style="font-weight: bold;">预览</span>
-                                </div>
-                                <div style="display: flex; gap: 10px; align-items: center;">
-                                    <input type="text" id="converter-search" placeholder="搜索..." onkeyup="searchTable('converter-table', this.value)" 
-                                        style="padding: 4px 8px; background: #333; border: 1px solid #555; color: white; border-radius: 4px;">
-                                    <button onclick="navigateSearch('converter-table', -1)" title="上一个"><i class="fa-solid fa-chevron-up"></i></button>
-                                    <button onclick="navigateSearch('converter-table', 1)" title="下一个"><i class="fa-solid fa-chevron-down"></i></button>
-                                    <div style="width: 1px; height: 20px; background: #555; margin: 0 5px;"></div>
-                                    <button class="btn-primary" onclick="downloadConverterExcel()">下载 Excel</button>
-                                </div>
-                            </div>
-                            <div id="converter-table-container" style="flex: 1; overflow: auto; padding: 10px;">
-                                <!-- Table injected here -->
-                            </div>
-                            <div id="converter-pagination" class="pagination-bar"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Panel 2: Diff -->
-                <div id="doc-panel-diff" class="doc-panel">
-                    <div class="panel-header">Excel 差异对比工具</div>
-                    <div class="panel-body" style="display: flex; flex-direction: column; height: 100%;">
-                        
-                        <!-- Top: Source File -->
-                        <div style="flex: 4; display: flex; flex-direction: column; border-bottom: 1px solid #444;">
-                            <div class="diff-toolbar">
-                                <span class="badge-source">源文件 (A)</span>
-                                <input type="file" id="diff-file-a" accept=".xlsx, .xls, .csv" onchange="loadDiffFile('A', this)">
-                                <div id="diff-sheets-a" class="sheet-tabs"></div>
-                            </div>
-                            <div id="diffA-table-container" class="diff-preview-container">
-                                <div class="empty-state">上传源文件以预览</div>
-                            </div>
-                            <div id="diffA-pagination" class="pagination-bar small"></div>
-                        </div>
-
-                        <!-- Middle: Control -->
-                        <div style="height: 120px; background: #252526; border-bottom: 1px solid #444; display: flex; flex-direction: column; padding: 5px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 10px;">
-                                <span style="font-size: 12px; font-weight: bold; color: #aaa;">对比条件</span>
-                                <button onclick="addDiffCondition()" style="background: none; border: none; color: #007acc; cursor: pointer; font-size: 12px;">+ 添加条件</button>
-                            </div>
-                            <div id="diff-conditions-list" style="flex: 1; overflow-y: auto; padding: 5px;">
-                                <!-- Condition Rows -->
-                            </div>
-                            <div style="text-align: center; padding: 5px;">
-                                <button class="btn-primary" onclick="startDiff()" style="padding: 4px 20px;">开始对比</button>
-                            </div>
-                        </div>
-
-                        <!-- Bottom: Target File -->
-                        <div style="flex: 4; display: flex; flex-direction: column;">
-                            <div class="diff-toolbar">
-                                <span class="badge-target">目标文件 (B)</span>
-                                <input type="file" id="diff-file-b" accept=".xlsx, .xls, .csv" onchange="loadDiffFile('B', this)">
-                                <div id="diff-sheets-b" class="sheet-tabs"></div>
-                            </div>
-                            <div id="diffB-table-container" class="diff-preview-container">
-                                <div class="empty-state">上传目标文件以预览</div>
-                            </div>
-                            <div id="diffB-pagination" class="pagination-bar small"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Panel 3: Toolbox -->
-                <div id="doc-panel-toolbox" class="doc-panel">
-                    <div class="panel-header">数据工具箱</div>
-                    <div class="panel-body" style="display: flex; flex-direction: column;">
-                        <div class="toolbar" style="padding: 10px; border-bottom: 1px solid #333;">
-                             <input type="file" id="toolbox-file" accept=".xlsx, .xls, .csv" onchange="loadToolboxFile(this)">
-                             <span style="margin-left: 10px; color: #aaa;">工具即将推出：去重、统计...</span>
-                        </div>
-                        <div id="toolbox-preview-container" style="flex: 1; overflow: auto; padding: 10px;">
-                             <div class="empty-state">上传文件以预览</div>
-                        </div>
-                        <div id="toolbox-pagination" class="pagination-bar"></div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </div>
-
-    <!-- Context Menu -->
-    <div id="context-menu" class="context-menu hidden">
-        <div class="context-menu-item" onclick="handleMenu('sftp')"><i class="fa-solid fa-folder"></i> SFTP 管理器</div>
-        <div class="context-menu-item" onclick="handleMenu('commands')"><i class="fa-solid fa-book"></i> 命令库</div>
-    </div>
-
-    <!-- Login Overlay -->
-    <div id="login-overlay" class="hidden">
-        <div class="login-box">
-            <h2>SSH 登录</h2>
-            <div class="input-group"><label>主机</label><input type="text" id="login-host" placeholder="192.168.1.1"></div>
-            <div class="input-group"><label>端口</label><input type="number" id="login-port" value="22"></div>
-            <div class="input-group"><label>用户</label><input type="text" id="login-user" placeholder="root"></div>
-            <div class="input-group"><label>密码</label><input type="password" id="login-pass"></div>
-            <button class="btn-primary" onclick="connectSSH()">连接</button>
-            <button onclick="document.getElementById('login-overlay').classList.add('hidden')" style="width:100%; margin-top:10px; background:none; border:none; color:#888; cursor:pointer;">取消</button>
-        </div>
-    </div>
-
-    <!-- Diff Result Preview Modal -->
-    <div id="diff-result-modal" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; display:flex; justify-content:center; align-items:center;">
-        <div style="width:90%; height:90%; background:#1e1e1e; border-radius:8px; display:flex; flex-direction:column; box-shadow:0 0 20px rgba(0,0,0,0.5);">
-            <div style="padding:15px; border-bottom:1px solid #333; display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-weight:bold; font-size:16px;">对比结果预览 (前 1000 行)</span>
-                <div>
-                    <button class="btn-primary" id="btn-download-diff" style="margin-right:10px;"><i class="fa-solid fa-download"></i> 下载完整结果</button>
-                    <button onclick="document.getElementById('diff-result-modal').classList.add('hidden')" style="background:none; border:none; color:#ccc; cursor:pointer; font-size:18px;"><i class="fa-solid fa-times"></i></button>
-                </div>
-            </div>
-            <div id="diff-result-table-container" style="flex:1; overflow:auto; padding:10px;">
-                <!-- Table injected here -->
-            </div>
-            <div id="diffResult-pagination" class="pagination-bar"></div>
-        </div>
-    </div>
+    <!-- Views -->
+    {% include 'partials/home.html' %}
+    {% include 'partials/ssh.html' %}
+    {% include 'partials/sftp.html' %}
+    {% include 'partials/commands.html' %}
+    {% include 'partials/doc.html' %}
+    
+    <!-- Modals & Context Menus -->
+    {% include 'partials/modals.html' %}
 
     <!-- Application Logic -->
     <script src="/static/js/main.js"></script>

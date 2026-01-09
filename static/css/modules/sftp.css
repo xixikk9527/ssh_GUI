@@ -1,0 +1,15 @@
+/* SFTP View */
+#sftp-layout { display: flex; flex-direction: column; height: 100%; width: 100%; }
+#sftp-toolbar { padding: 8px; background: var(--sidebar-bg); border-bottom: 1px solid var(--border-color); display: flex; gap: 10px; align-items: center; }
+#sftp-main { flex: 1; display: flex; overflow: hidden; }
+#sftp-tree { width: 250px; background: var(--sidebar-bg); overflow-y: auto; border-right: 1px solid var(--border-color); }
+#sftp-editor { flex: 1; position: relative; }
+.file-item { padding: 4px 8px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; display: flex; align-items: center; gap: 6px; border: 1px solid transparent; }
+.file-item:hover { background: var(--item-hover); }
+.file-item.selected { background: #005a9e; color: white; border-color: #007acc; }
+
+/* SFTP Tree Styles */
+.tree-node { cursor: pointer; user-select: none; }
+.tree-content { display: flex; align-items: center; padding: 4px 8px; border-radius: 4px; transition: background 0.2s; }
+.tree-content:hover { background: var(--item-hover); }
+.tree-children { margin-left: 20px; border-left: 1px solid #333; }

@@ -1,0 +1,24 @@
+    <!-- 4. Command Library View -->
+    <div id="view-commands" class="view-container">
+        <div id="cmd-lib-layout">
+            <div id="cmd-lib-toolbar">
+                <button onclick="switchView('ssh')" style="background:none; border:none; color:white; font-size:16px; cursor:pointer;"><i class="fa-solid fa-arrow-left"></i> 返回</button>
+                <div style="font-weight:bold; font-size:16px; margin-left:10px;">命令库</div>
+            </div>
+            <div id="cmd-lib-main">
+                <div id="cmd-category-list">
+                    <!-- Categories will be injected here -->
+                </div>
+                <div id="cmd-list-container">
+                    <div id="cmd-list-header">
+                        <span id="cmd-current-category" style="font-weight:bold; color:white;">所有命令</span>
+                        <input type="text" id="cmd-search" placeholder="搜索命令..." onkeyup="filterCommands(this.value)" 
+                            style="padding:6px 12px; background:#333; border:1px solid #444; color:white; width:250px; border-radius:4px;">
+                    </div>
+                    <div id="cmd-list">
+                        <!-- Commands will be injected here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>

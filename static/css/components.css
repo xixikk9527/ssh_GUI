@@ -1,0 +1,152 @@
+/* Context Menu (Fixed Position - from SSH View) */
+.context-menu {
+    position: fixed; background: #252526; border: 1px solid #454545; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    z-index: 1000; min-width: 150px; padding: 5px 0; border-radius: 4px;
+}
+.context-menu-item { padding: 8px 15px; cursor: pointer; display: flex; gap: 8px; align-items: center; font-size: 13px; }
+.context-menu-item:hover { background: #094771; color: white; }
+
+/* Login Modal */
+#login-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8);
+    z-index: 9999; display: flex; justify-content: center; align-items: center;
+}
+.login-box { background: #252526; padding: 30px; border-radius: 8px; width: 300px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+.login-box h2 { margin-top: 0; text-align: center; color: white; }
+.input-group { margin-bottom: 15px; }
+.input-group label { display: block; margin-bottom: 5px; font-size: 12px; }
+.input-group input { width: 100%; padding: 8px; background: #3c3c3c; border: 1px solid #3c3c3c; color: white; border-radius: 4px; box-sizing: border-box; }
+button.btn-primary { width: 100%; padding: 10px; background: var(--accent); border: none; color: white; border-radius: 4px; cursor: pointer; font-weight: bold; }
+button.btn-primary:hover { background: #0062a3; }
+button { cursor: pointer; }
+
+/* Interactive Table */
+.doc-table { width: 100%; border-collapse: collapse; font-size: 13px; color: #ccc; }
+
+.doc-table th { 
+    position: sticky; top: 0; background: #333; 
+    font-weight: bold; color: #eee; text-align: center;
+    user-select: none; z-index: 10;
+    border: 1px solid #444; border-bottom: 2px solid #555;
+    padding: 4px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; height: 30px; box-sizing: border-box;
+}
+
+.doc-table td { 
+    border: 1px solid #444; padding: 4px 8px; box-sizing: border-box;
+    /* Full Display Styles */
+    white-space: nowrap;        /* Prevent wrap to keep height small */
+    overflow: hidden;           /* Hide overflow */
+    text-overflow: ellipsis;    /* Add ellipsis */
+    height: 30px;               /* Fixed height */
+    max-height: 30px;
+    vertical-align: middle;     /* Align middle */
+    min-width: 100px;           /* Minimum width */
+    max-width: 400px;           /* Max width */
+}
+
+/* Row Number Column Style */
+.doc-table .row-num {
+    width: 50px; min-width: 50px; max-width: 50px;
+    background: #2d2d2d; color: #888; text-align: center;
+    position: sticky; left: 0; z-index: 5;
+    border-right: 2px solid #555;
+    user-select: none;
+    /* Keep row num non-wrapping */
+    white-space: nowrap; word-break: normal;
+}
+.doc-table th.row-num { z-index: 15; background: #333; } /* Corner cell */
+
+/* Column Highlight & Hover */
+.doc-table td.col-hover { background: #333 !important; }
+.doc-table th.col-hover { background: #444 !important; }
+
+/* Active Condition Highlight (Currently Editing) - Bright Blue */
+.doc-table td.col-highlight-active { background: rgba(0, 122, 204, 0.3) !important; }
+.doc-table th.col-highlight-active { background: rgba(0, 122, 204, 0.5) !important; border-bottom-color: #007acc; }
+
+/* Used Condition Highlight (Already Added) - Dim Green/Blue */
+.doc-table td.col-highlight-used { background: rgba(46, 125, 50, 0.2) !important; }
+.doc-table th.col-highlight-used { background: rgba(46, 125, 50, 0.4) !important; border-bottom-color: #2e7d32; }
+
+.doc-table tr:hover td { background: #2a2d2e; } 
+.doc-table td { background: #1e1e1e; }
+
+.search-highlight { background: #ffff00; color: #000; font-weight: bold; }
+.search-highlight.current { background: #ff9800; outline: 2px solid red; }
+
+.pagination-bar { 
+    padding: 10px; 
+    border-top: 1px solid #333; 
+    background: #252526; 
+    display: flex; 
+    justify-content: flex-end; 
+    gap: 10px; 
+    font-size: 13px; 
+    align-items: center; 
+    flex-shrink: 0; /* Prevent shrinking */
+    min-height: 40px;
+}
+.pagination-bar button {
+    padding: 5px 15px;
+    background: #3c3c3c;
+    border: 1px solid #555;
+    color: white;
+    border-radius: 4px;
+}
+.pagination-bar button:hover { background: #505050; }
+.pagination-bar button:disabled { opacity: 0.5; cursor: not-allowed; }
+.pagination-bar.small { padding: 5px 10px; min-height: 30px; font-size: 11px; }
+
+ /* Context Menu (Absolute Position - from Table) */
+ /* Note: Overriding .context-menu to be absolute instead of fixed if needed. 
+    But wait, the original file had both. 
+    Line 42: position: fixed;
+    Line 262: position: absolute;
+    
+    The second definition (Line 262) overrides the first if loaded later. 
+    However, .context-menu was defined twice in the SAME file. 
+    So effectively, the LAST definition wins for conflicting properties.
+    Line 42 has `position: fixed`. Line 262 has `position: absolute`.
+    So `position` becomes `absolute`.
+    Line 42 has `padding: 5px 0`. Line 262 doesn't specify padding (uses default? No, CSS merges).
+    
+    Actually, to match the "original behavior", I should replicate the FINAL state.
+    The final state in `style.css` had `position: absolute` at the bottom.
+    BUT, `ssh-sidebar` context menu might expect `fixed`?
+    Let's look at `ssh.html`: `oncontextmenu="showContextMenu(event)"`.
+    `main.js`: 
+    ```javascript
+    function showContextMenu(e) {
+        // ...
+        menu.style.left = e.pageX + 'px';
+        menu.style.top = e.pageY + 'px';
+    }
+    ```
+    If `fixed`, `pageX` might be wrong if scrolled? But body `overflow: hidden`.
+    If `absolute`, it depends on parent? `body` is the parent usually.
+    
+    Let's just include BOTH definitions in order, exactly as they were, to be safe.
+ */
+ .context-menu {
+     position: absolute;
+     background: #252526;
+     border: 1px solid #454545;
+     box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+     z-index: 1000;
+     display: none;
+     min-width: 120px;
+ }
+ .context-menu-item {
+     padding: 8px 12px;
+     cursor: pointer;
+     color: #cccccc;
+     font-size: 13px;
+     display: flex;
+     align-items: center;
+     gap: 8px;
+ }
+ .context-menu-item:hover {
+     background: #094771;
+     color: white;
+ }
+ .context-menu-item i { width: 16px; text-align: center; }

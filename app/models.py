@@ -30,3 +30,4 @@ class DiffRunRequest(BaseModel):
     file_id_b: str
     sheet_b: str
     conditions: List[DiffCondition]
+    mode: str = "intersection" # intersection, difference_a, difference_b

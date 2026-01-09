@@ -1,0 +1,18 @@
+    <!-- 3. SFTP View -->
+    <div id="view-sftp" class="view-container">
+        <div id="sftp-layout">
+            <div id="sftp-toolbar">
+                <button onclick="switchView('ssh')" style="background:none; border:none; color:white;"><i class="fa-solid fa-arrow-left"></i> 返回</button>
+                <div style="flex:1; display:flex; justify-content:center; gap:10px;">
+                    <input type="text" id="sftp-search" placeholder="搜索文件 (递归)..." style="padding:5px; background:#333; border:1px solid #555; color:white; width:250px; border-radius:4px;">
+                    <button onclick="sftpSearch()" style="background:#444; border:none; color:white; padding:5px 10px; border-radius:4px;"><i class="fa-solid fa-search"></i></button>
+                </div>
+                <span id="sftp-path" style="margin-right:10px; font-size:13px; color:#aaa; max-width:200px; overflow:hidden; white-space:nowrap;">/</span>
+                <button onclick="saveFile()" class="btn-primary" style="width:auto; padding:5px 15px;"><i class="fa-solid fa-save"></i> 保存</button>
+            </div>
+            <div id="sftp-main">
+                <div id="sftp-tree"></div>
+                <div id="sftp-editor"></div>
+            </div>
+        </div>
+    </div>

@@ -1,0 +1,10 @@
+/* SSH View */
+#ssh-layout { display: flex; flex-direction: column; height: 100%; width: 100%; }
+#ssh-top-bar { padding: 8px; background: var(--sidebar-bg); border-bottom: 1px solid var(--border-color); display: flex; gap: 10px; align-items: center; }
+#cmd-input { flex: 1; padding: 6px; background: #3c3c3c; border: 1px solid #555; color: white; border-radius: 4px; }
+#ssh-main { flex: 1; display: flex; overflow: hidden; }
+#ssh-sidebar { width: 250px; background: var(--sidebar-bg); border-right: 1px solid var(--border-color); padding: 10px; }
+#ssh-terminal { flex: 1; position: relative; padding: 5px; background: #000; }
+
+.host-info-item { padding: 10px; background: #333; border-radius: 5px; cursor: context-menu; }
+/* Note: .context-menu (Fixed) is moved to components.css as it shares name with another one */

@@ -82,24 +82,50 @@ async function downloadConverterExcel() {
 // --- Shared Table Logic ---
 function renderInteractiveTable(containerId, module) {
     const state = docState[module];
+    if (!state) return; // Safety check
+    
     const container = document.getElementById(containerId);
+    if (!container) return;
+    
     const tableId = module + '-table';
     
+    // Ensure numeric types
+    state.page = Number(state.page) || 1;
+    state.pageSize = Number(state.pageSize) || 50;
+
     // Pagination Calc
-    const start = (state.page - 1) * state.pageSize;
-    const end = start + state.pageSize;
-    const displayRows = state.rows.slice(start, end);
-    const totalPages = Math.ceil(state.rows.length / state.pageSize);
+    // Check if totalRows is defined (even if 0)
+    const isBackendPagination = (state.totalRows !== undefined && state.totalRows !== null);
     
+    // Ensure rows is an array
+    if (!Array.isArray(state.rows)) state.rows = [];
+
+    const totalRows = isBackendPagination ? state.totalRows : state.rows.length;
+    // Prevent division by zero or NaN
+    const totalPages = (state.pageSize > 0) ? Math.ceil(totalRows / state.pageSize) : 1;
+    const safeTotalPages = totalPages > 0 ? totalPages : 1;
+    
+    let displayRows = [];
+    if (isBackendPagination) {
+        displayRows = state.rows;
+        // Safety check
+        if (displayRows.length > state.pageSize) {
+            displayRows = displayRows.slice(0, state.pageSize);
+        }
+    } else {
+        const start = (state.page - 1) * state.pageSize;
+        const end = start + state.pageSize;
+        displayRows = state.rows.slice(start, end);
+    }
+
     // Build Table HTML
     let html = `<table id="${tableId}" class="doc-table"><thead><tr>`;
     
-    // Corner Cell (Row Numbers Header)
+    // Corner Cell
     html += `<th class="row-num">#</th>`;
 
     // Headers
-    state.headers.forEach((h, idx) => {
-        // Add class for column selection/hover identification
+    (state.headers || []).forEach((h, idx) => {
         html += `<th class="col-${idx}" 
             ondblclick="editHeader('${module}', ${idx}, this)" 
             onclick="selectDiffColumn('${module}', '${h}')" 
@@ -111,21 +137,22 @@ function renderInteractiveTable(containerId, module) {
     html += `</tr></thead><tbody>`;
     
     // Rows
+    // FIX: For client-side pagination, row numbers should start from (page-1)*size + 1.
+    // For backend pagination, we also need to know the offset.
+    // Current logic: pageStartIdx is calculated from current page.
+    const pageStartIdx = (state.page - 1) * state.pageSize;
+    
     displayRows.forEach((row, rIdx) => {
-        const globalRowIdx = start + rIdx + 1;
+        const globalRowIdx = pageStartIdx + rIdx + 1;
         html += `<tr>`;
-        
-        // Row Number Cell
         html += `<td class="row-num">${globalRowIdx}</td>`;
         
-        state.headers.forEach((col, cIdx) => {
-            let val = row[col] !== null ? String(row[col]) : '';
-            // Highlight Logic
+        (state.headers || []).forEach((col, cIdx) => {
+            let val = (row && row[col] !== null && row[col] !== undefined) ? String(row[col]) : '';
             if (state.filterQuery) {
                  const regex = new RegExp(`(${state.filterQuery})`, 'gi');
                  val = val.replace(regex, '<span class="search-highlight">$1</span>');
             }
-            // Add class for column, and context menu handler
             html += `<td class="col-${cIdx}" 
                 oncontextmenu="showHeaderMenu(event, '${module}', ${cIdx})"
                 onmouseenter="highlightColumn('${module}', ${cIdx}, true)"
@@ -139,51 +166,144 @@ function renderInteractiveTable(containerId, module) {
     
     container.innerHTML = html;
     
-    // Update highlights after render
     if (module.startsWith('diff')) {
         updateColumnHighlights();
     }
     
     // Render Pagination
-    const pagId = module + '-pagination';
-    const pagEl = document.getElementById(pagId);
+    // Note: module might be "diffResult" (camelCase), but ID in HTML is "diffResult-pagination"
+    // Other modules like "converter", "toolbox" might use different ID conventions?
+    // Let's check HTML.
+    // Converter has no pagination ID in previous code?
+    // Toolbox usually just "toolbox-preview-container".
+    
+    // Let's try to find a pagination container generically.
+    // If module is "diffResult", ID is "diffResult-pagination".
+    // If module is "converter", ID might be "converter-pagination" (if exists).
+    
+    const possibleIds = [module + '-pagination', module.replace('Result', '') + '-pagination'];
+    let pagEl = null;
+    for (const id of possibleIds) {
+        pagEl = document.getElementById(id);
+        if (pagEl) break;
+    }
+    
     if (pagEl) {
-        const totalRows = state.rows.length;
         pagEl.innerHTML = `
             <div style="margin-right: auto; color: #888; font-size: 12px;">
                 总计：${totalRows} 行
             </div>
             
             <select onchange="changePageSize('${module}', this.value)" style="background: #3c3c3c; color: white; border: 1px solid #555; padding: 2px 5px; border-radius: 4px; margin-right: 10px; font-size: 12px;">
-                <option value="10" ${state.pageSize == 10 ? 'selected' : ''}>10 / 页</option>
-                <option value="20" ${state.pageSize == 20 ? 'selected' : ''}>20 / 页</option>
-                <option value="50" ${state.pageSize == 50 ? 'selected' : ''}>50 / 页</option>
-                <option value="100" ${state.pageSize == 100 ? 'selected' : ''}>100 / 页</option>
+                <option value="10" ${state.pageSize === 10 ? 'selected' : ''}>10 / 页</option>
+                <option value="20" ${state.pageSize === 20 ? 'selected' : ''}>20 / 页</option>
+                <option value="50" ${state.pageSize === 50 ? 'selected' : ''}>50 / 页</option>
+                <option value="100" ${state.pageSize === 100 ? 'selected' : ''}>100 / 页</option>
             </select>
 
-            <button onclick="changePage('${module}', -1)" ${state.page === 1 ? 'disabled' : ''}>< 上一页</button>
-            <span style="margin: 0 10px;">第 ${state.page} 页 / 共 ${totalPages} 页</span>
-            <button onclick="changePage('${module}', 1)" ${state.page === totalPages ? 'disabled' : ''}>下一页 ></button>
+            <button onclick="changePage('${module}', -1)" ${state.page <= 1 ? 'disabled' : ''}>< 上一页</button>
+            <span style="margin: 0 10px;">第 ${state.page} 页 / 共 ${safeTotalPages} 页</span>
+            <button onclick="changePage('${module}', 1)" ${state.page >= safeTotalPages ? 'disabled' : ''}>下一页 ></button>
         `;
     }
 }
 
-function changePageSize(module, newSize) {
+async function changePageSize(module, newSize) {
     const state = docState[module];
+    if (!state) return;
+    
     state.pageSize = parseInt(newSize);
-    state.page = 1; // Reset to first page
+    state.page = 1; 
+    
+    if (state.totalRows !== undefined && state.totalRows !== null) {
+        await fetchDiffPage(module);
+    }
     renderInteractiveTable(module + '-table-container', module);
 }
 
-function changePage(module, delta) {
+async function changePage(module, delta) {
+    console.log(`DEBUG: changePage called for ${module}, delta=${delta}`);
     const state = docState[module];
-    const totalPages = Math.ceil(state.rows.length / state.pageSize);
+    if (!state) return;
+    
+    const isBackendPagination = (state.totalRows !== undefined && state.totalRows !== null);
+    const totalRows = isBackendPagination ? state.totalRows : state.rows.length;
+    // Prevent division by zero
+    const pageSize = state.pageSize > 0 ? state.pageSize : 50;
+    const totalPages = Math.ceil(totalRows / pageSize) || 1;
+    
+    console.log(`DEBUG: Current Page: ${state.page}, Total Pages: ${totalPages}, Total Rows: ${totalRows}`);
+    
     const newPage = state.page + delta;
+    
     if (newPage >= 1 && newPage <= totalPages) {
         state.page = newPage;
+        console.log(`DEBUG: Advancing to page ${newPage}`);
+        
+        if (isBackendPagination) {
+             console.log("DEBUG: Fetching backend page...");
+             const success = await fetchDiffPage(module);
+             if (!success) {
+                 console.error("DEBUG: Backend fetch failed");
+                 state.page -= delta; // Revert if failed
+                 return; 
+             }
+        }
+        
         renderInteractiveTable(module + '-table-container', module);
+    } else {
+        console.warn("DEBUG: Page out of bounds");
     }
 }
+
+async function fetchDiffPage(module) {
+    const state = docState[module];
+    if (!state || !state.resultId) {
+        console.error("DEBUG: Missing state or resultId for", module);
+        return false;
+    }
+    
+    // Show loading indicator
+    const container = document.getElementById(module + '-table-container');
+    if(container) container.style.opacity = '0.5';
+    
+    try {
+        let url;
+        if (module === 'diffResult') {
+             url = `/api/doc/diff/result/${state.resultId}/page?page=${state.page}&size=${state.pageSize}`;
+        } else if (module === 'diffA' || module === 'diffB') {
+             const side = module === 'diffA' ? 'A' : 'B';
+             const sheet = docState.diff['currentSheet' + side];
+             // Encode sheet name to handle special chars
+             url = `/api/doc/file/${state.resultId}/data?sheet=${encodeURIComponent(sheet)}&page=${state.page}&size=${state.pageSize}`;
+        } else {
+             // Fallback or other modules
+             console.error("DEBUG: Unknown module for paging:", module);
+             return false;
+        }
+        
+        console.log("DEBUG: Fetching URL:", url);
+
+        const res = await fetch(url);
+        if (!res.ok) throw new Error("分页加载失败: " + res.statusText);
+        const data = await res.json();
+        
+        console.log("DEBUG: Page Data Received. Rows:", data.rows ? data.rows.length : 'N/A');
+        
+        if (Array.isArray(data.rows)) {
+            state.rows = data.rows;
+            if(container) container.style.opacity = '1';
+            return true;
+        }
+        throw new Error("Invalid data format");
+    } catch(e) {
+        alert(e.message);
+        console.error("DEBUG: Fetch Error:", e);
+        if(container) container.style.opacity = '1';
+        return false;
+    }
+}
+
 
 function editHeader(module, idx, th) {
     const oldVal = docState[module].headers[idx];
@@ -340,7 +460,9 @@ function navigateSearch(tableId, dir) {
          rows: [...previewData.rows], 
          page: 1,
          pageSize: 50,
-         filterQuery: ''
+         filterQuery: '',
+         resultId: docState.diff['file' + side],
+         totalRows: previewData.total_rows
     };
     
     // Use unified ID: diffA-table-container
@@ -364,15 +486,21 @@ function navigateSearch(tableId, dir) {
      
      div.innerHTML = `
          <select class="cond-col-a" style="flex:1; background:#333; color:white; border:1px solid #555;" onchange="updateColumnHighlights()">${optsA}</select>
-         <select class="cond-op" style="width:80px; background:#333; color:white; border:1px solid #555;">
+         <select class="cond-op" style="width:80px; background:#333; color:white; border:1px solid #555;" onchange="updateColumnHighlights()">
              <option value="equals">等于</option>
              <option value="not_equals">不等于</option>
              <option value="contains">包含</option>
              <option value="not_contains">不包含</option>
          </select>
          <select class="cond-col-b" style="flex:1; background:#333; color:white; border:1px solid #555;" onchange="updateColumnHighlights()">${optsB}</select>
+         <span class="cond-count" style="width:60px; text-align:right; color:#888; font-size:12px;">-</span>
          <button onclick="this.parentElement.remove(); updateColumnHighlights();" style="background:none; border:none; color:#f44336; cursor:pointer;"><i class="fa-solid fa-times"></i></button>
      `;
+     
+     // Initialize touched state for smart pairing
+     div.dataset.touchedA = "false";
+     div.dataset.touchedB = "false";
+     
      list.appendChild(div);
      
      // Scroll to bottom
@@ -413,12 +541,16 @@ function navigateSearch(tableId, dir) {
     
     if (conditions.length === 0) { alert("请至少添加一个条件"); return; }
     
+    // Get selected mode
+    const mode = document.getElementById('diff-mode-select').value;
+    
     const req = {
         file_id_a: docState.diff.fileA,
         sheet_a: docState.diff.currentSheetA,
         file_id_b: docState.diff.fileB,
         sheet_b: docState.diff.currentSheetB,
-        conditions: conditions
+        conditions: conditions,
+        mode: mode
     };
     
     try {
@@ -432,22 +564,63 @@ function navigateSearch(tableId, dir) {
         const data = await res.json();
         
         // Show Preview Modal
+        // Ensure rows match pageSize for initial page
+        const initialRows = data.preview.rows.slice(0, 50);
+        
         docState.diffResult = {
             headers: data.preview.headers,
-            rows: data.preview.rows,
+            rows: initialRows, // Use sliced rows for page 1
             page: 1,
             pageSize: 50,
             filterQuery: '',
-            resultId: data.result_id
+            resultId: data.result_id,
+            totalRows: data.total_rows // Ensure total_rows is correctly passed
         };
         
-        document.getElementById('diff-result-modal').classList.remove('hidden');
+        console.log("DEBUG: Diff Result Init. Total Rows:", data.total_rows, "Result ID:", data.result_id);
+        
+        // Pass conditions and mode to modal for display
+        showDiffResultModal(conditions, mode);
+        
+        // Ensure the table container is cleared before rendering to avoid duplicates or stale data
+        const container = document.getElementById('diff-result-table-container');
+        if (container) container.innerHTML = '';
+        
         renderInteractiveTable('diff-result-table-container', 'diffResult');
         
         // Bind Download Button
         document.getElementById('btn-download-diff').onclick = () => downloadDiffResult(data.result_id);
         
     } catch (e) { alert("对比失败：" + e.message); }
+}
+
+function showDiffResultModal(conditions, mode) {
+    const modal = document.getElementById('diff-result-modal');
+    modal.classList.remove('hidden');
+    
+    // Inject conditions summary
+    const container = document.getElementById('diff-result-conditions');
+    if (container) {
+        const opMap = {
+            'equals': '等于', 'not_equals': '不等于',
+            'contains': '包含', 'not_contains': '不包含'
+        };
+        const modeMap = {
+            'intersection': '交集 (Matched)',
+            'difference_a': '仅源文件 (A-B)',
+            'difference_b': '仅目标文件 (B-A)'
+        };
+        
+        const modeBadge = `<span class="badge-cond" style="background:#007acc; color:white;">模式: ${modeMap[mode] || mode}</span>`;
+        
+        const condBadges = conditions.map((c, i) => `
+            <span class="badge-cond">
+                ${c.col_a} <span style="color:#aaa">${opMap[c.op]}</span> ${c.col_b}
+            </span>
+        `).join('');
+        
+        container.innerHTML = modeBadge + condBadges;
+    }
 }
 
 async function downloadDiffResult(resultId) {
@@ -459,7 +632,6 @@ async function downloadDiffResult(resultId) {
   }
 
   // --- Double Click Interaction & Highlighting ---
-  let lastInteractedSide = null; // 'A' or 'B' or null
 
   function handleCellDoubleClick(module, colName) {
       if (!module.startsWith('diff')) return;
@@ -468,53 +640,40 @@ async function downloadDiffResult(resultId) {
       const list = document.getElementById('diff-conditions-list');
       const rows = list.children;
       
-      // If A is double clicked
-      if (side === 'A') {
-          // Logic: 
-          // 1. If we just interacted with B (completed a pair) -> Start NEW pair with A
-          // 2. If we just interacted with A (maybe correcting selection) -> Update CURRENT last row A
-          // 3. If no rows -> Start NEW pair
+      // Determine if we need a new row or use the last one
+      let targetRow = null;
+      let needNewRow = false;
+
+      if (rows.length === 0) {
+          needNewRow = true;
+      } else {
+          const lastRow = list.lastElementChild;
+          // Check if the last row is "Full" (both sides touched)
+          // If manually added, dataset might be undefined, treat as false (not full)
+          const touchedA = lastRow.dataset.touchedA === "true";
+          const touchedB = lastRow.dataset.touchedB === "true";
           
-          let targetRow = null;
-          
-          if (rows.length === 0 || lastInteractedSide === 'B') {
-              // Create new row
-              addDiffCondition(); // This creates a row and sets default first col
-              targetRow = list.lastElementChild;
+          if (touchedA && touchedB) {
+              needNewRow = true;
           } else {
-              // Use last row
-              targetRow = list.lastElementChild;
+              targetRow = lastRow;
           }
-          
-          // Set A value
+      }
+
+      if (needNewRow) {
+          addDiffCondition();
+          targetRow = list.lastElementChild;
+      }
+      
+      // Update value and touched state
+      if (side === 'A') {
           const selA = targetRow.querySelector('.cond-col-a');
           selA.value = colName;
-          
-          lastInteractedSide = 'A';
-      } 
-      // If B is double clicked
-      else if (side === 'B') {
-          // Logic:
-          // 1. If we just interacted with A (pending pair) -> Complete CURRENT row B
-          // 2. If we just interacted with B (correcting) -> Update CURRENT last row B
-          // 3. If no rows or just completed B -> Start NEW pair (Wait, B first? Rare, but okay. Create row, set B)
-          
-          let targetRow = null;
-          
-          if (rows.length === 0 || lastInteractedSide === 'B') {
-               // Create new row (though unusual to start with B)
-               addDiffCondition();
-               targetRow = list.lastElementChild;
-          } else {
-               // Use last row (which presumably has A set)
-               targetRow = list.lastElementChild;
-          }
-          
-          // Set B value
+          targetRow.dataset.touchedA = "true";
+      } else {
           const selB = targetRow.querySelector('.cond-col-b');
           selB.value = colName;
-          
-          lastInteractedSide = 'B';
+          targetRow.dataset.touchedB = "true";
       }
       
       updateColumnHighlights();
@@ -532,8 +691,6 @@ async function downloadDiffResult(resultId) {
       if (rows.length === 0) return;
       
       // We distinguish "Active" (Last row, currently being edited) vs "Used" (Previous rows)
-      // Logic: The last row is "Active" IF it's not fully "sealed". 
-      // But for simplicity, let's say the last row is ALWAYS "Active" (Bright), others are "Used" (Dim).
       
       for (let i = 0; i < rows.length; i++) {
           const row = rows[i];
@@ -548,7 +705,74 @@ async function downloadDiffResult(resultId) {
           // Apply to Table B
           applyHighlight('diffB', colB, className);
       }
+      
+      // 3. Trigger Stats Check (Debounced)
+      if (window.diffStatsTimeout) clearTimeout(window.diffStatsTimeout);
+      window.diffStatsTimeout = setTimeout(checkDiffStats, 500);
   }
+
+  async function checkDiffStats() {
+      if (!docState.diff.fileA || !docState.diff.fileB) return;
+      
+      const conditions = [];
+      const rows = document.querySelectorAll('#diff-conditions-list > div');
+      if (rows.length === 0) return;
+      
+      rows.forEach(div => {
+          conditions.push({
+              col_a: div.querySelector('.cond-col-a').value,
+              op: div.querySelector('.cond-op').value,
+              col_b: div.querySelector('.cond-col-b').value
+          });
+      });
+      
+      // Get selected mode
+      const mode = document.getElementById('diff-mode-select').value;
+      
+      const req = {
+          file_id_a: docState.diff.fileA,
+          sheet_a: docState.diff.currentSheetA,
+          file_id_b: docState.diff.fileB,
+          sheet_b: docState.diff.currentSheetB,
+          conditions: conditions,
+          mode: mode // Add mode to stats request
+      };
+      
+      // Show loading
+      rows.forEach(div => {
+          div.querySelector('.cond-count').innerText = '...';
+      });
+      document.getElementById('diff-total-count-display').innerText = '计算中...';
+      
+      try {
+          const res = await fetch('/api/doc/diff/stats', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify(req)
+          });
+          const data = await res.json();
+          
+          if (data.error) {
+               document.getElementById('diff-total-count-display').innerText = '错误: ' + data.error;
+               rows.forEach(div => div.querySelector('.cond-count').innerText = 'Err');
+               return;
+          }
+          
+          // Update steps
+          data.steps.forEach((count, idx) => {
+              if (rows[idx]) {
+                  rows[idx].querySelector('.cond-count').innerText = count + ' 项';
+              }
+          });
+          
+          // Update total
+          document.getElementById('diff-total-count-display').innerText = `最终匹配: ${data.total} 项`;
+          
+      } catch (e) {
+          console.error(e);
+      }
+  }
+
 
   function applyHighlight(module, colName, className) {
       if (!docState[module]) return;

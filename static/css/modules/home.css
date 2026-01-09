@@ -1,0 +1,10 @@
+/* Home View */
+#view-home { justify-content: center; align-items: center; gap: 40px; }
+.card {
+    width: 200px; height: 150px; background: var(--sidebar-bg); border: 1px solid var(--border-color);
+    border-radius: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center;
+    cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; user-select: none;
+}
+.card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.3); background: var(--item-hover); }
+.card i { font-size: 40px; margin-bottom: 15px; color: var(--accent); }
+.card span { font-size: 18px; font-weight: bold; }
