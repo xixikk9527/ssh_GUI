@@ -2,178 +2,33 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Web SSH Platform</title>
+    <title>Web SSH 平台</title>
     <!-- Local Static Resources -->
     <link rel="stylesheet" href="/static/xterm.css" />
+    <link rel="stylesheet" href="/static/css/style.css" />
     <script src="/static/xterm.js"></script>
     <script src="/static/addon-fit.js"></script>
     <!-- CDN Resources -->
     <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
-
-    <style>
-        :root {
-            --bg-color: #1e1e1e;
-            --sidebar-bg: #252526;
-            --item-hover: #2a2d2e;
-            --accent: #007acc;
-            --text-color: #cccccc;
-            --border-color: #333;
-        }
-        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; background: var(--bg-color); color: var(--text-color); overflow: hidden; }
-        
-        /* Utility */
-        .hidden { display: none !important; }
-        .flex { display: flex; }
-        .flex-col { display: flex; flex-direction: column; }
-        .h-full { height: 100%; }
-        .w-full { width: 100%; }
-        
-        /* Views */
-        .view-container { width: 100%; height: 100%; display: none; }
-        .view-container.active { display: flex; }
-
-        /* Home View */
-        #view-home { justify-content: center; align-items: center; gap: 40px; }
-        .card {
-            width: 200px; height: 150px; background: var(--sidebar-bg); border: 1px solid var(--border-color);
-            border-radius: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center;
-            cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; user-select: none;
-        }
-        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.3); background: var(--item-hover); }
-        .card i { font-size: 40px; margin-bottom: 15px; color: var(--accent); }
-        .card span { font-size: 18px; font-weight: bold; }
-
-        /* SSH View */
-        #ssh-layout { display: flex; flex-direction: column; height: 100%; width: 100%; }
-        #ssh-top-bar { padding: 8px; background: var(--sidebar-bg); border-bottom: 1px solid var(--border-color); display: flex; gap: 10px; align-items: center; }
-        #cmd-input { flex: 1; padding: 6px; background: #3c3c3c; border: 1px solid #555; color: white; border-radius: 4px; }
-        #ssh-main { flex: 1; display: flex; overflow: hidden; }
-        #ssh-sidebar { width: 250px; background: var(--sidebar-bg); border-right: 1px solid var(--border-color); padding: 10px; }
-        #ssh-terminal { flex: 1; position: relative; padding: 5px; background: #000; }
-        
-        .host-info-item { padding: 10px; background: #333; border-radius: 5px; cursor: context-menu; }
-        .context-menu {
-            position: fixed; background: #252526; border: 1px solid #454545; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-            z-index: 1000; min-width: 150px; padding: 5px 0; border-radius: 4px;
-        }
-        .context-menu-item { padding: 8px 15px; cursor: pointer; display: flex; gap: 8px; align-items: center; font-size: 13px; }
-        .context-menu-item:hover { background: #094771; color: white; }
-
-        /* SFTP View */
-        #sftp-layout { display: flex; flex-direction: column; height: 100%; width: 100%; }
-        #sftp-toolbar { padding: 8px; background: var(--sidebar-bg); border-bottom: 1px solid var(--border-color); display: flex; gap: 10px; align-items: center; }
-        #sftp-main { flex: 1; display: flex; overflow: hidden; }
-        #sftp-tree { width: 250px; background: var(--sidebar-bg); overflow-y: auto; border-right: 1px solid var(--border-color); }
-        #sftp-editor { flex: 1; position: relative; }
-        .file-item { padding: 4px 8px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; display: flex; align-items: center; gap: 6px; border: 1px solid transparent; }
-        .file-item:hover { background: var(--item-hover); }
-        .file-item.selected { background: #005a9e; color: white; border-color: #007acc; }
-        
-        /* SFTP Tree Styles */
-        .tree-node { cursor: pointer; user-select: none; }
-        .tree-content { display: flex; align-items: center; padding: 4px 8px; border-radius: 4px; transition: background 0.2s; }
-        .tree-content:hover { background: var(--item-hover); }
-        .tree-children { margin-left: 20px; border-left: 1px solid #333; }
-        
-        /* Command Library Styles - Layout Refinement */
-        #cmd-lib-layout { display: flex; flex-direction: column; height: 100%; width: 100%; background: #121212; }
-        #cmd-lib-toolbar { padding: 12px 20px; background: #1e1e1e; border-bottom: 1px solid #333; display: flex; align-items: center; gap: 15px; }
-        #cmd-lib-main { flex: 1; display: flex; overflow: hidden; }
-        
-        /* Left Sidebar - Improved */
-        #cmd-category-list { 
-            width: 260px; 
-            background: #1e1e1e; 
-            border-right: 1px solid #333; 
-            display: flex; flex-direction: column;
-        }
-        .category-header { 
-            padding: 18px 20px; font-weight: bold; color: #888; font-size: 11px; 
-            letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid #2d2d2d;
-        }
-        .category-scroll { flex: 1; overflow-y: auto; padding: 10px 0; }
-        .category-scroll::-webkit-scrollbar { width: 4px; }
-        .category-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-
-        .category-item { 
-            padding: 12px 20px; cursor: pointer; font-size: 13px; color: #aaa;
-            display: flex; align-items: center; justify-content: space-between;
-            border-left: 3px solid transparent; transition: all 0.2s;
-        }
-        .category-item:hover { background: #2a2d2e; color: #fff; }
-        .category-item.active { background: #2d2d2d; color: #007acc; border-left-color: #007acc; }
-        .category-badge { 
-            background: #333; color: #666; font-size: 10px; padding: 2px 8px; border-radius: 10px; 
-        }
-        .category-item.active .category-badge { background: #007acc; color: #fff; }
-
-        /* Right Content - Better Spacing */
-        #cmd-list-container { flex: 1; display: flex; flex-direction: column; background: #121212; }
-        #cmd-list-header {
-            padding: 15px 25px; background: #181818; border-bottom: 1px solid #2d2d2d;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        #cmd-list { flex: 1; padding: 25px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
-        
-        /* Cards - Fix Empty/Small Box Issue */
-        .cmd-card { 
-            background: #1e1e1e; border: 1px solid #2d2d2d; border-radius: 8px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.2s, border-color 0.2s;
-        }
-        .cmd-card:hover { border-color: #444; transform: translateY(-2px); }
-        .cmd-card-header {
-            padding: 12px 20px; border-bottom: 1px solid #2d2d2d;
-            display: flex; justify-content: space-between; align-items: flex-start; gap: 15px;
-        }
-        .cmd-code-wrap {
-            flex: 1; font-family: 'Consolas', 'Monaco', monospace; color: #4ec9b0; 
-            font-size: 14px; line-height: 1.6; word-break: break-all; white-space: pre-wrap;
-            background: #121212; padding: 10px 15px; border-radius: 6px; border: 1px solid #2d2d2d;
-            min-height: 24px; display: block;
-        }
-        .cmd-card-body { padding: 15px 20px; color: #999; font-size: 13px; line-height: 1.6; }
-        .cmd-actions { display: flex; gap: 10px; flex-shrink: 0; padding-top: 5px; }
-        
-        .action-btn {
-            background: #333; border: none; color: #ccc; padding: 6px 12px; border-radius: 4px; 
-            cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 6px;
-            transition: all 0.2s;
-        }
-        .action-btn:hover { background: #444; color: #fff; }
-        .action-btn.run { background: #007acc; color: #fff; }
-        .action-btn.run:hover { background: #008be5; }
-
-
-
-        /* Login Modal */
-        #login-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8);
-            z-index: 9999; display: flex; justify-content: center; align-items: center;
-        }
-        .login-box { background: #252526; padding: 30px; border-radius: 8px; width: 300px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-        .login-box h2 { margin-top: 0; text-align: center; color: white; }
-        .input-group { margin-bottom: 15px; }
-        .input-group label { display: block; margin-bottom: 5px; font-size: 12px; }
-        .input-group input { width: 100%; padding: 8px; background: #3c3c3c; border: 1px solid #3c3c3c; color: white; border-radius: 4px; box-sizing: border-box; }
-        button.btn-primary { width: 100%; padding: 10px; background: var(--accent); border: none; color: white; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        button.btn-primary:hover { background: #0062a3; }
-        button { cursor: pointer; }
-    </style>
 </head>
 <body>
+    <!-- Context Menu HTML -->
+    <div id="column-context-menu" class="context-menu">
+        <div class="context-menu-item" onclick="deleteColumnAction()">
+            <i class="fa-solid fa-trash"></i> 删除列
+        </div>
+    </div>
 
-    <!-- Views -->
-    
     <!-- 1. Home View -->
     <div id="view-home" class="view-container active">
         <div class="card" ondblclick="handleHomeAction('ssh')">
             <i class="fa-solid fa-terminal"></i>
-            <span>SSH Terminal</span>
+            <span>SSH 终端</span>
         </div>
         <div class="card" ondblclick="handleHomeAction('doc')">
             <i class="fa-solid fa-file-word"></i>
-            <span>Documents</span>
+            <span>文档工具</span>
         </div>
     </div>
 
@@ -181,20 +36,20 @@
     <div id="view-ssh" class="view-container">
         <div id="ssh-layout">
             <div id="ssh-top-bar">
-                <button onclick="switchView('home')" title="Back Home" style="background:none; border:none; color:white; cursor:pointer;"><i class="fa-solid fa-home"></i></button>
+                <button onclick="switchView('home')" title="返回主页" style="background:none; border:none; color:white; cursor:pointer;"><i class="fa-solid fa-home"></i></button>
                 <div style="width: 1px; height: 20px; background: #555; margin: 0 10px;"></div>
-                <button onclick="reconnectTerminal()" title="Reconnect" style="background:none; border:none; color:#4caf50; cursor:pointer;"><i class="fa-solid fa-rotate"></i></button>
-                <button onclick="disconnectTerminal()" title="Disconnect" style="background:none; border:none; color:#f44336; cursor:pointer;"><i class="fa-solid fa-plug-circle-xmark"></i></button>
+                <button onclick="reconnectTerminal()" title="重新连接" style="background:none; border:none; color:#4caf50; cursor:pointer;"><i class="fa-solid fa-rotate"></i></button>
+                <button onclick="disconnectTerminal()" title="断开连接" style="background:none; border:none; color:#f44336; cursor:pointer;"><i class="fa-solid fa-plug-circle-xmark"></i></button>
                 <div style="width: 1px; height: 20px; background: #555; margin: 0 10px;"></div>
-                <input type="text" id="cmd-input" placeholder="Enter command and press Enter to execute...">
+                <input type="text" id="cmd-input" placeholder="输入命令并按回车执行...">
             </div>
             <div id="ssh-main">
                 <div id="ssh-sidebar">
-                    <div style="font-size:12px; color:#888; margin-bottom:10px;">HOST INFO (Right Click)</div>
+                    <div style="font-size:12px; color:#888; margin-bottom:10px;">主机信息 (右键点击)</div>
                     <div id="host-info-card" class="host-info-item" oncontextmenu="showContextMenu(event)">
-                        <div id="host-display-ip" style="font-weight:bold; color:white;">Not Connected</div>
+                        <div id="host-display-ip" style="font-weight:bold; color:white;">未连接</div>
                         <div id="host-display-user" style="font-size:12px; color:#aaa;"></div>
-                        <div style="margin-top:5px; font-size:11px; color:#666;">Double click Home card to connect</div>
+                        <div style="margin-top:5px; font-size:11px; color:#666;">双击主页卡片进行连接</div>
                     </div>
                 </div>
                 <div id="ssh-terminal">
@@ -208,13 +63,13 @@
     <div id="view-sftp" class="view-container">
         <div id="sftp-layout">
             <div id="sftp-toolbar">
-                <button onclick="switchView('ssh')" style="background:none; border:none; color:white;"><i class="fa-solid fa-arrow-left"></i> Back</button>
+                <button onclick="switchView('ssh')" style="background:none; border:none; color:white;"><i class="fa-solid fa-arrow-left"></i> 返回</button>
                 <div style="flex:1; display:flex; justify-content:center; gap:10px;">
-                    <input type="text" id="sftp-search" placeholder="Search files (recursive)..." style="padding:5px; background:#333; border:1px solid #555; color:white; width:250px; border-radius:4px;">
+                    <input type="text" id="sftp-search" placeholder="搜索文件 (递归)..." style="padding:5px; background:#333; border:1px solid #555; color:white; width:250px; border-radius:4px;">
                     <button onclick="sftpSearch()" style="background:#444; border:none; color:white; padding:5px 10px; border-radius:4px;"><i class="fa-solid fa-search"></i></button>
                 </div>
                 <span id="sftp-path" style="margin-right:10px; font-size:13px; color:#aaa; max-width:200px; overflow:hidden; white-space:nowrap;">/</span>
-                <button onclick="saveFile()" class="btn-primary" style="width:auto; padding:5px 15px;"><i class="fa-solid fa-save"></i> Save</button>
+                <button onclick="saveFile()" class="btn-primary" style="width:auto; padding:5px 15px;"><i class="fa-solid fa-save"></i> 保存</button>
             </div>
             <div id="sftp-main">
                 <div id="sftp-tree"></div>
@@ -227,8 +82,8 @@
     <div id="view-commands" class="view-container">
         <div id="cmd-lib-layout">
             <div id="cmd-lib-toolbar">
-                <button onclick="switchView('ssh')" style="background:none; border:none; color:white; font-size:16px; cursor:pointer;"><i class="fa-solid fa-arrow-left"></i> Back</button>
-                <div style="font-weight:bold; font-size:16px; margin-left:10px;">Command Library</div>
+                <button onclick="switchView('ssh')" style="background:none; border:none; color:white; font-size:16px; cursor:pointer;"><i class="fa-solid fa-arrow-left"></i> 返回</button>
+                <div style="font-weight:bold; font-size:16px; margin-left:10px;">命令库</div>
             </div>
             <div id="cmd-lib-main">
                 <div id="cmd-category-list">
@@ -236,8 +91,8 @@
                 </div>
                 <div id="cmd-list-container">
                     <div id="cmd-list-header">
-                        <span id="cmd-current-category" style="font-weight:bold; color:white;">All Commands</span>
-                        <input type="text" id="cmd-search" placeholder="Search commands..." onkeyup="filterCommands(this.value)" 
+                        <span id="cmd-current-category" style="font-weight:bold; color:white;">所有命令</span>
+                        <input type="text" id="cmd-search" placeholder="搜索命令..." onkeyup="filterCommands(this.value)" 
                             style="padding:6px 12px; background:#333; border:1px solid #444; color:white; width:250px; border-radius:4px;">
                     </div>
                     <div id="cmd-list">
@@ -248,634 +103,169 @@
         </div>
     </div>
 
-    <!-- 5. Doc View (Placeholder) -->
+    <!-- 5. Doc View -->
     <div id="view-doc" class="view-container">
-        <div style="width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-            <h2 style="color:white;">Document Processing</h2>
-            <p>Feature coming soon...</p>
-            <button onclick="switchView('home')" class="btn-primary" style="width:auto; margin-top:20px;">Back Home</button>
+        <div id="doc-layout" style="display: flex; width: 100%; height: 100%;">
+            <!-- Doc Sidebar -->
+            <div id="doc-sidebar" style="width: 220px; background: #252526; border-right: 1px solid #333; display: flex; flex-direction: column;">
+                <div style="padding: 15px; font-weight: bold; font-size: 14px; border-bottom: 1px solid #333; display: flex; align-items: center; gap: 10px;">
+                    <button onclick="switchView('home')" style="background:none; border:none; color:white; cursor:pointer;" title="返回主页"><i class="fa-solid fa-home"></i></button>
+                    <span>文档工具</span>
+                </div>
+                <div class="doc-nav-item active" onclick="switchDocPanel('converter')"><i class="fa-solid fa-file-export"></i> 格式转换</div>
+                <div class="doc-nav-item" onclick="switchDocPanel('diff')"><i class="fa-solid fa-code-compare"></i> Excel 对比</div>
+                <div class="doc-nav-item" onclick="switchDocPanel('toolbox')"><i class="fa-solid fa-toolbox"></i> 数据工具箱</div>
+            </div>
+            
+            <!-- Doc Content Area -->
+            <div id="doc-content" style="flex: 1; position: relative; overflow: hidden; background: #1e1e1e;">
+                
+                <!-- Panel 1: Converter -->
+                <div id="doc-panel-converter" class="doc-panel active">
+                    <div class="panel-header">JSON 转 Excel 转换器</div>
+                    <div class="panel-body">
+                        <!-- Input Section -->
+                        <div id="converter-input-area" style="padding: 20px; display: flex; flex-direction: column; gap: 10px; height: 100%; justify-content: center; align-items: center;">
+                            <div style="text-align: center; color: #888; margin-bottom: 20px;">
+                                <i class="fa-solid fa-file-code" style="font-size: 48px; margin-bottom: 10px;"></i>
+                                <div>选择要转换的 JSON 文件</div>
+                            </div>
+                            <button class="btn-primary" onclick="triggerJsonUpload()" style="font-size: 16px; padding: 12px 24px;">
+                                <i class="fa-solid fa-upload"></i> 上传 JSON 文件
+                            </button>
+                            <input type="file" id="json-upload-input" style="display: none;" accept=".json" onchange="handleJsonUpload(this)">
+                        </div>
+                        
+                        <!-- Preview Section (Hidden initially) -->
+                        <div id="converter-preview-area" class="hidden" style="display: flex; flex-direction: column; height: 100%;">
+                            <div class="toolbar" style="padding: 10px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center;">
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <button onclick="resetConverter()" style="background:none; border:none; color:#ccc; cursor:pointer;"><i class="fa-solid fa-arrow-left"></i> 返回</button>
+                                    <span style="font-weight: bold;">预览</span>
+                                </div>
+                                <div style="display: flex; gap: 10px; align-items: center;">
+                                    <input type="text" id="converter-search" placeholder="搜索..." onkeyup="searchTable('converter-table', this.value)" 
+                                        style="padding: 4px 8px; background: #333; border: 1px solid #555; color: white; border-radius: 4px;">
+                                    <button onclick="navigateSearch('converter-table', -1)" title="上一个"><i class="fa-solid fa-chevron-up"></i></button>
+                                    <button onclick="navigateSearch('converter-table', 1)" title="下一个"><i class="fa-solid fa-chevron-down"></i></button>
+                                    <div style="width: 1px; height: 20px; background: #555; margin: 0 5px;"></div>
+                                    <button class="btn-primary" onclick="downloadConverterExcel()">下载 Excel</button>
+                                </div>
+                            </div>
+                            <div id="converter-table-container" style="flex: 1; overflow: auto; padding: 10px;">
+                                <!-- Table injected here -->
+                            </div>
+                            <div id="converter-pagination" class="pagination-bar"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel 2: Diff -->
+                <div id="doc-panel-diff" class="doc-panel">
+                    <div class="panel-header">Excel 差异对比工具</div>
+                    <div class="panel-body" style="display: flex; flex-direction: column; height: 100%;">
+                        
+                        <!-- Top: Source File -->
+                        <div style="flex: 4; display: flex; flex-direction: column; border-bottom: 1px solid #444;">
+                            <div class="diff-toolbar">
+                                <span class="badge-source">源文件 (A)</span>
+                                <input type="file" id="diff-file-a" accept=".xlsx, .xls, .csv" onchange="loadDiffFile('A', this)">
+                                <div id="diff-sheets-a" class="sheet-tabs"></div>
+                            </div>
+                            <div id="diffA-table-container" class="diff-preview-container">
+                                <div class="empty-state">上传源文件以预览</div>
+                            </div>
+                            <div id="diffA-pagination" class="pagination-bar small"></div>
+                        </div>
+
+                        <!-- Middle: Control -->
+                        <div style="height: 120px; background: #252526; border-bottom: 1px solid #444; display: flex; flex-direction: column; padding: 5px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 10px;">
+                                <span style="font-size: 12px; font-weight: bold; color: #aaa;">对比条件</span>
+                                <button onclick="addDiffCondition()" style="background: none; border: none; color: #007acc; cursor: pointer; font-size: 12px;">+ 添加条件</button>
+                            </div>
+                            <div id="diff-conditions-list" style="flex: 1; overflow-y: auto; padding: 5px;">
+                                <!-- Condition Rows -->
+                            </div>
+                            <div style="text-align: center; padding: 5px;">
+                                <button class="btn-primary" onclick="startDiff()" style="padding: 4px 20px;">开始对比</button>
+                            </div>
+                        </div>
+
+                        <!-- Bottom: Target File -->
+                        <div style="flex: 4; display: flex; flex-direction: column;">
+                            <div class="diff-toolbar">
+                                <span class="badge-target">目标文件 (B)</span>
+                                <input type="file" id="diff-file-b" accept=".xlsx, .xls, .csv" onchange="loadDiffFile('B', this)">
+                                <div id="diff-sheets-b" class="sheet-tabs"></div>
+                            </div>
+                            <div id="diffB-table-container" class="diff-preview-container">
+                                <div class="empty-state">上传目标文件以预览</div>
+                            </div>
+                            <div id="diffB-pagination" class="pagination-bar small"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel 3: Toolbox -->
+                <div id="doc-panel-toolbox" class="doc-panel">
+                    <div class="panel-header">数据工具箱</div>
+                    <div class="panel-body" style="display: flex; flex-direction: column;">
+                        <div class="toolbar" style="padding: 10px; border-bottom: 1px solid #333;">
+                             <input type="file" id="toolbox-file" accept=".xlsx, .xls, .csv" onchange="loadToolboxFile(this)">
+                             <span style="margin-left: 10px; color: #aaa;">工具即将推出：去重、统计...</span>
+                        </div>
+                        <div id="toolbox-preview-container" style="flex: 1; overflow: auto; padding: 10px;">
+                             <div class="empty-state">上传文件以预览</div>
+                        </div>
+                        <div id="toolbox-pagination" class="pagination-bar"></div>
+                    </div>
+                </div>
+
+            </div>
         </div>
     </div>
 
     <!-- Context Menu -->
     <div id="context-menu" class="context-menu hidden">
-        <div class="context-menu-item" onclick="handleMenu('sftp')"><i class="fa-solid fa-folder"></i> SFTP Manager</div>
-        <div class="context-menu-item" onclick="handleMenu('commands')"><i class="fa-solid fa-book"></i> Command Library</div>
+        <div class="context-menu-item" onclick="handleMenu('sftp')"><i class="fa-solid fa-folder"></i> SFTP 管理器</div>
+        <div class="context-menu-item" onclick="handleMenu('commands')"><i class="fa-solid fa-book"></i> 命令库</div>
     </div>
 
     <!-- Login Overlay -->
     <div id="login-overlay" class="hidden">
         <div class="login-box">
-            <h2>SSH Login</h2>
-            <div class="input-group"><label>Host</label><input type="text" id="login-host" placeholder="192.168.1.1"></div>
-            <div class="input-group"><label>Port</label><input type="number" id="login-port" value="22"></div>
-            <div class="input-group"><label>User</label><input type="text" id="login-user" placeholder="root"></div>
-            <div class="input-group"><label>Pass</label><input type="password" id="login-pass"></div>
-            <button class="btn-primary" onclick="connectSSH()">Connect</button>
-            <button onclick="document.getElementById('login-overlay').classList.add('hidden')" style="width:100%; margin-top:10px; background:none; border:none; color:#888; cursor:pointer;">Cancel</button>
+            <h2>SSH 登录</h2>
+            <div class="input-group"><label>主机</label><input type="text" id="login-host" placeholder="192.168.1.1"></div>
+            <div class="input-group"><label>端口</label><input type="number" id="login-port" value="22"></div>
+            <div class="input-group"><label>用户</label><input type="text" id="login-user" placeholder="root"></div>
+            <div class="input-group"><label>密码</label><input type="password" id="login-pass"></div>
+            <button class="btn-primary" onclick="connectSSH()">连接</button>
+            <button onclick="document.getElementById('login-overlay').classList.add('hidden')" style="width:100%; margin-top:10px; background:none; border:none; color:#888; cursor:pointer;">取消</button>
         </div>
     </div>
 
-    <script>
-        // Global State
-        let session_id = null;
-        let term, socket, fitAddon;
-        let editor;
-        let currentSftpPath = ".";
-        let currentEditingFile = null;
-        let allCommands = [];
-
-        // --- Init ---
-        document.addEventListener('DOMContentLoaded', async () => {
-            initTerminal();
-            loadHistory(); // Try to auto-load history
-            
-            // Monaco Init
-            require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' }});
-            require(['vs/editor/editor.main'], function() {
-                editor = monaco.editor.create(document.getElementById('sftp-editor'), {
-                    value: "// Select a file to edit...",
-                    language: 'plaintext',
-                    theme: 'vs-dark',
-                    automaticLayout: true
-                });
-                editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, saveFile);
-            });
-
-            // Global click to hide context menu
-            document.addEventListener('click', () => document.getElementById('context-menu').classList.add('hidden'));
-            
-            // Cmd input enter
-            document.getElementById('cmd-input').addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    const cmd = e.target.value;
-                    if (cmd && socket && socket.readyState === WebSocket.OPEN) {
-                        socket.send(cmd + '\n');
-                        term.focus();
-                        e.target.value = '';
-                    }
-                }
-            });
-        });
-
-        // --- View Manager ---
-        function switchView(viewName) {
-            document.querySelectorAll('.view-container').forEach(el => {
-                el.classList.remove('active');
-            });
-            document.getElementById('view-' + viewName).classList.add('active');
-            
-            if (viewName === 'ssh' && fitAddon) {
-                // Ensure terminal fits the container after view switch
-                setTimeout(() => { 
-                    fitAddon.fit(); 
-                    term.focus(); 
-                    sendResize();
-                }, 100);
-            }
-            if (viewName === 'commands') {
-                loadCommands();
-            }
-            if (viewName === 'sftp') {
-                // Initial load if first time
-                if (document.getElementById('sftp-tree').innerHTML === '') {
-                    refreshFileTree(currentSftpPath);
-                }
-            }
-        }
-
-        function handleHomeAction(action) {
-            if (action === 'ssh') {
-                if (!session_id) {
-                    showLogin();
-                } else {
-                    switchView('ssh');
-                }
-            } else if (action === 'doc') {
-                switchView('doc');
-            }
-        }
-
-        // --- SSH & Terminal ---
-        function initTerminal() {
-            if (typeof Terminal === 'undefined') {
-                // alert("xterm.js failed to load!"); return;
-                console.error("xterm.js failed to load");
-                return;
-            }
-            term = new Terminal({
-                cursorBlink: true, fontSize: 14, fontFamily: 'Menlo, Monaco, monospace',
-                theme: { background: '#000000' }
-            });
-            
-            // FitAddon Logic
-            let FitAddonClass;
-            if (typeof FitAddon === 'object' && FitAddon.FitAddon) FitAddonClass = FitAddon.FitAddon;
-            else if (typeof FitAddon === 'function') FitAddonClass = FitAddon;
-            else { console.error("FitAddon missing"); return; }
-
-            fitAddon = new FitAddonClass();
-            term.loadAddon(fitAddon);
-            term.open(document.getElementById('terminal-container'));
-            fitAddon.fit();
-            
-            new ResizeObserver(() => {
-                try { fitAddon.fit(); sendResize(); } catch(e){}
-            }).observe(document.getElementById('terminal-container'));
-            
-            term.onData(data => {
-                if (socket && socket.readyState === WebSocket.OPEN) socket.send(data);
-            });
-        }
-
-        async function loadHistory() {
-            try {
-                const res = await fetch('/api/history');
-                const data = await res.json();
-                if (data.hostname) {
-                    document.getElementById('login-host').value = data.hostname;
-                    document.getElementById('login-user').value = data.username;
-                    document.getElementById('login-pass').value = data.password;
-                    document.getElementById('login-port').value = data.port || 22;
-                    // Auto connect? Maybe better to let user double click.
-                    // But we update host info so user knows what will be connected.
-                    updateHostInfo(data);
-                }
-            } catch (e) {}
-        }
-
-        function showLogin() {
-            document.getElementById('login-overlay').classList.remove('hidden');
-        }
-
-        async function connectSSH() {
-            const host = document.getElementById('login-host').value;
-            const user = document.getElementById('login-user').value;
-            const pass = document.getElementById('login-pass').value;
-            const port = document.getElementById('login-port').value;
-
-            if(!host || !user || !pass) { alert("Please fill all fields"); return; }
-
-            const btn = document.querySelector('#login-overlay .btn-primary');
-            const originalText = btn.innerText;
-            btn.innerText = "Connecting...";
-            btn.disabled = true;
-
-            try {
-                const res = await fetch('/api/connect', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ hostname: host, username: user, password: pass, port: parseInt(port) })
-                });
-                const data = await res.json();
-                if (res.ok) {
-                    session_id = data.session_id;
-                    document.getElementById('login-overlay').classList.add('hidden');
-                    
-                    // Save history
-                    fetch('/api/history', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ hostname: host, username: user, password: pass, port: parseInt(port) })
-                    });
-
-                    updateHostInfo({hostname: host, username: user});
-                    startWebSocket();
-                    switchView('ssh');
-                } else {
-                    alert("Connection failed: " + data.detail);
-                }
-            } catch (e) { alert("Error: " + e.message); }
-            finally {
-                btn.innerText = originalText;
-                btn.disabled = false;
-            }
-        }
-
-        function startWebSocket() {
-            if (socket) {
-                // Remove onclose handler to avoid double logging if we are manually closing to reconnect
-                socket.onclose = null;
-                socket.close();
-            }
-            term.reset();
-            const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-            socket = new WebSocket(`${protocol}://${window.location.host}/ws/ssh/${session_id}`);
-            socket.onopen = () => { 
-                term.write('\r\n\x1b[32mConnected to ' + document.getElementById('host-display-ip').innerText + '...\x1b[0m\r\n'); 
-                sendResize(); 
-            };
-            socket.onmessage = (e) => term.write(e.data);
-            socket.onclose = () => term.write('\r\n\x1b[31mConnection Closed.\x1b[0m\r\n');
-            socket.onerror = () => term.write('\r\n\x1b[31mWebSocket Error.\x1b[0m\r\n');
-        }
-
-        function reconnectTerminal() {
-            if (!session_id) {
-                alert("No active session. Please connect via Home first.");
-                return;
-            }
-            startWebSocket();
-        }
-
-        function disconnectTerminal() {
-            if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.close();
-            } else {
-                term.write('\r\n\x1b[33mAlready disconnected.\x1b[0m\r\n');
-            }
-        }
-
-        function sendResize() {
-            if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify({ type: 'resize', cols: term.cols, rows: term.rows }));
-            }
-        }
-
-        function updateHostInfo(info) {
-            document.getElementById('host-display-ip').innerText = info.hostname;
-            document.getElementById('host-display-user').innerText = info.username;
-        }
-
-        // --- Context Menu ---
-        function showContextMenu(e) {
-            e.preventDefault();
-            if (!session_id) return;
-            const menu = document.getElementById('context-menu');
-            menu.style.left = e.pageX + 'px';
-            menu.style.top = e.pageY + 'px';
-            menu.classList.remove('hidden');
-        }
-
-        function handleMenu(action) {
-            if (!session_id) { alert("Please connect first!"); showLogin(); return; }
-            switchView(action);
-        }
-
-        // --- Command Library Logic ---
-        async function loadCommands() {
-            if (allCommands.length > 0) return; 
-            const listEl = document.getElementById('cmd-list');
-            listEl.innerHTML = '<div style="padding:20px; color:#aaa;"><i class="fa-solid fa-spinner fa-spin"></i> Loading commands...</div>';
-            
-            try {
-                const res = await fetch('/api/config/commands');
-                if (!res.ok) throw new Error("API Error");
-                allCommands = await res.json();
-                
-                if (allCommands.length === 0) {
-                    listEl.innerHTML = '<div style="padding:20px; color:#aaa;">No commands found in config/kali_commands.json</div>';
-                    return;
-                }
-                renderCommands(allCommands);
-            } catch (e) { 
-                console.error(e);
-                listEl.innerHTML = `<div style="padding:20px; color:red;">Failed to load commands: ${e.message}</div>`;
-            }
-        }
-
-        function renderCommands(commands) {
-            const categories = ['All', ...new Set(commands.map(c => c.category || 'Uncategorized'))];
-            const catContainer = document.getElementById('cmd-category-list');
-            
-            // Render Categories
-            let html = `<div class="category-header"><i class="fa-solid fa-list"></i> CATEGORIES</div>`;
-            html += `<div class="category-scroll">`;
-            
-            categories.forEach(cat => {
-                const count = cat === 'All' ? commands.length : commands.filter(c => (c.category || 'Uncategorized') === cat).length;
-                html += `
-                    <div class="category-item" onclick="filterByCategory('${cat}')">
-                        <span>${cat}</span>
-                        <span class="category-badge">${count}</span>
-                    </div>`;
-            });
-            html += `</div>`;
-            
-            catContainer.innerHTML = html;
-            
-            // Select first
-            filterByCategory('All');
-        }
-
-        function filterByCategory(cat) {
-            // Update UI Active State
-            document.querySelectorAll('.category-item').forEach(el => {
-                const name = el.querySelector('span').innerText;
-                el.classList.toggle('active', name === cat);
-            });
-            
-            document.getElementById('cmd-current-category').innerText = cat;
-            
-            // Filter Data
-            let filtered;
-            if (cat === 'All') filtered = allCommands;
-            else filtered = allCommands.filter(c => (c.category || 'Uncategorized') === cat);
-            
-            renderCommandList(filtered);
-        }
-
-        function filterCommands(query) {
-            if (!query) {
-                // Reset to current active category
-                const activeCat = document.querySelector('.category-item.active span').innerText;
-                filterByCategory(activeCat);
-                return;
-            }
-            const filtered = allCommands.filter(c => 
-                c.command.toLowerCase().includes(query.toLowerCase()) || 
-                c.description.toLowerCase().includes(query.toLowerCase())
-            );
-            renderCommandList(filtered);
-        }
-
-        function renderCommandList(list) {
-            const container = document.getElementById('cmd-list');
-            if (list.length === 0) {
-                container.innerHTML = '<div style="color:#666; text-align:center; margin-top:50px;">No commands found</div>';
-                return;
-            }
-            
-            container.innerHTML = list.map(cmd => {
-                const safeCmd = cmd.command.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-                return `
-                <div class="cmd-card">
-                    <div class="cmd-card-header">
-                        <div class="cmd-code-wrap">${cmd.command}</div>
-                        <div class="cmd-actions">
-                            <button class="action-btn" onclick="copyCommand('${safeCmd}')"><i class="fa-solid fa-copy"></i> Copy</button>
-                            <button class="action-btn run" onclick="executeCommand('${safeCmd}')"><i class="fa-solid fa-play"></i> Run</button>
-                        </div>
-                    </div>
-                    <div class="cmd-card-body">
-                        <div style="color:#888; font-size:12px; margin-bottom:5px;">${cmd.category || 'General'}</div>
-                        ${cmd.description}
-                    </div>
+    <!-- Diff Result Preview Modal -->
+    <div id="diff-result-modal" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; display:flex; justify-content:center; align-items:center;">
+        <div style="width:90%; height:90%; background:#1e1e1e; border-radius:8px; display:flex; flex-direction:column; box-shadow:0 0 20px rgba(0,0,0,0.5);">
+            <div style="padding:15px; border-bottom:1px solid #333; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-weight:bold; font-size:16px;">对比结果预览 (前 1000 行)</span>
+                <div>
+                    <button class="btn-primary" id="btn-download-diff" style="margin-right:10px;"><i class="fa-solid fa-download"></i> 下载完整结果</button>
+                    <button onclick="document.getElementById('diff-result-modal').classList.add('hidden')" style="background:none; border:none; color:#ccc; cursor:pointer; font-size:18px;"><i class="fa-solid fa-times"></i></button>
                 </div>
-            `}).join('');
-        }
+            </div>
+            <div id="diff-result-table-container" style="flex:1; overflow:auto; padding:10px;">
+                <!-- Table injected here -->
+            </div>
+            <div id="diffResult-pagination" class="pagination-bar"></div>
+        </div>
+    </div>
 
-        function executeCommand(cmd) {
-            switchView('ssh');
-            const input = document.getElementById('cmd-input');
-            input.value = cmd;
-            input.focus();
-        }
-        
-        function copyCommand(cmd) {
-            navigator.clipboard.writeText(cmd).then(() => {
-                // alert("Copied!");
-            });
-        }
-
-        // --- SFTP ---
-        let selectedFileElement = null;
-
-        function selectFileElement(el) {
-            if (selectedFileElement) selectedFileElement.classList.remove('selected');
-            selectedFileElement = el;
-            el.classList.add('selected');
-        }
-
-        function getParentPath(path) {
-            if (!path || path === '/' || path === '.') return '/';
-            // Remove trailing slash if present (except root)
-            if (path.length > 1 && path.endsWith('/')) path = path.slice(0, -1);
-            
-            const lastSlashIndex = path.lastIndexOf('/');
-            if (lastSlashIndex <= 0) return '/'; // Parent of /foo is /
-            return path.substring(0, lastSlashIndex);
-        }
-
-        async function refreshFileTree(path) {
-            if (!session_id) return;
-            const container = document.getElementById('sftp-tree');
-            container.innerHTML = '<div style="padding:10px; color:#aaa;">Loading...</div>';
-            try {
-                const res = await fetch(`/api/files/list?session_id=${session_id}&path=${encodeURIComponent(path)}`);
-                const data = await res.json();
-                currentSftpPath = data.current_path;
-                document.getElementById('sftp-path').innerText = currentSftpPath;
-                
-                container.innerHTML = '';
-                if (currentSftpPath !== '/' && currentSftpPath !== '.') {
-                    const upEl = document.createElement('div');
-                    upEl.className = 'file-item';
-                    upEl.innerHTML = `<i class="fa-solid fa-arrow-up"></i> ..`;
-                    upEl.ondblclick = () => refreshFileTree(getParentPath(currentSftpPath));
-                    container.appendChild(upEl);
-                }
-                
-                data.files.forEach(f => {
-                    const el = document.createElement('div');
-                    el.className = 'file-item';
-                    el.innerHTML = `<i class="fa-solid ${f.is_dir ? 'fa-folder' : 'fa-file'}"></i> ${f.name}`;
-                    
-                    // Single click select
-                    el.onclick = () => selectFileElement(el);
-                    
-                    // Double click action
-                    el.ondblclick = () => {
-                        if (f.is_dir) refreshFileTree(currentSftpPath + '/' + f.name);
-                        else openFile(currentSftpPath + '/' + f.name);
-                    };
-                    
-                    container.appendChild(el);
-                });
-            } catch (e) { container.innerHTML = '<div style="padding:10px; color:red;">Error loading files</div>'; }
-        }
-
-        async function openFile(path) {
-            try {
-                const res = await fetch(`/api/files/content?session_id=${session_id}&path=${encodeURIComponent(path)}`);
-                if (!res.ok) {
-                    const err = await res.json();
-                    alert(err.detail); return;
-                }
-                const data = await res.json();
-                currentEditingFile = path;
-                editor.setValue(data.content);
-            } catch (e) { alert("Failed to open file (Network Error)"); }
-        }
-
-        async function saveFile() {
-            if (!currentEditingFile) return;
-            try {
-                await fetch('/api/files/save', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ session_id, path: currentEditingFile, content: editor.getValue() })
-                });
-                alert("Saved successfully!");
-            } catch (e) { alert("Save failed"); }
-        }
-
-        // Helper to build tree from flat paths
-        function buildTree(items) {
-            const root = {};
-            items.forEach(item => {
-                const parts = item.path.split('/').filter(p => p); // simple split
-                let current = root;
-                parts.forEach((part, i) => {
-                    if (!current[part]) {
-                        current[part] = { 
-                            __data: (i === parts.length - 1) ? item : null, // Store item data at leaf or intermediate match
-                            __children: {} 
-                        };
-                    } else if (i === parts.length - 1) {
-                         current[part].__data = item; // It's a match itself
-                    }
-                    current = current[part].__children;
-                });
-            });
-            return root;
-        }
-
-        function renderTreeHtml(node, level = 0) {
-            let html = '';
-            for (const key in node) {
-                const childNode = node[key];
-                const hasChildren = Object.keys(childNode.__children).length > 0;
-                const item = childNode.__data;
-                const isDir = item ? item.is_dir : true; // If no data, it's an intermediate dir
-                const path = item ? item.path : ''; // We might not have path for intermediate nodes if not returned by search
-                
-                // Indentation
-                const padding = level * 15 + 5;
-                
-                html += `<div class="file-item" style="padding-left:${padding}px">`;
-                
-                // Icon
-                if (isDir) {
-                    html += `<i class="fa-solid fa-folder" style="color: #dcb67a; margin-right:5px;"></i>`;
-                } else {
-                    html += `<i class="fa-solid fa-file" style="color: #ccc; margin-right:5px;"></i>`;
-                }
-                
-                // Name
-                html += `<span>${key}</span>`;
-                
-                html += `</div>`;
-                
-                // Click handlers
-                // We need to inject JS differently or use event delegation, but for simplicity:
-                // We'll add data attributes and use a global click handler or closure isn't easy with string HTML.
-                // Let's use DOM elements instead of string HTML for recursive tree?
-                // String HTML is faster for large trees. Let's stick to string and add onclick via unique ID or just not use onclick string.
-            }
-            return html;
-        }
-
-        // --- Tree View Logic ---
-        function createTreeDom(node, container, level = 0) {
-            for (const key in node) {
-                const childNode = node[key];
-                const hasChildren = Object.keys(childNode.__children).length > 0;
-                const item = childNode.__data;
-                const isDir = item ? item.is_dir : hasChildren;
-                
-                // Node Container
-                const nodeEl = document.createElement('div');
-                nodeEl.className = 'tree-node';
-                
-                // Content Row
-                const contentEl = document.createElement('div');
-                contentEl.className = 'tree-content';
-                contentEl.style.paddingLeft = (level * 15 + 5) + 'px';
-                
-                // Icon Logic
-                let iconHtml = '';
-                if (isDir) {
-                    iconHtml = `<i class="fa-solid fa-folder" style="color: #dcb67a; margin-right:6px; width:14px; text-align:center;"></i>`;
-                } else {
-                    iconHtml = `<i class="fa-solid fa-file" style="color: #9cdcfe; margin-right:6px; width:14px; text-align:center;"></i>`;
-                }
-                
-                contentEl.innerHTML = `${iconHtml}<span style="font-size:13px;">${key}</span>`;
-                nodeEl.appendChild(contentEl);
-                
-                // Children Container
-                let childrenContainer = null;
-                if (hasChildren) {
-                    childrenContainer = document.createElement('div');
-                    childrenContainer.className = 'tree-children';
-                    // Initially expanded for search results
-                    createTreeDom(childNode.__children, childrenContainer, level); // level handled by padding, children container just needs indent
-                }
-
-                // Interactions
-                if (item) {
-                    contentEl.title = item.path;
-                    
-                    // Double Click: Action
-                    contentEl.ondblclick = (e) => {
-                        e.stopPropagation();
-                        if (item.is_dir) {
-                            // Jump to directory in Main View
-                            refreshFileTree(item.path);
-                        } else {
-                            // Open file
-                            openFile(item.path);
-                        }
-                    };
-                }
-
-                // Single Click: Toggle / Select
-                contentEl.onclick = (e) => {
-                    e.stopPropagation();
-                    // Visual Selection
-                    document.querySelectorAll('.tree-content').forEach(el => el.style.background = '');
-                    contentEl.style.background = '#37373d';
-                    
-                    // Toggle Children if Dir
-                    if (isDir && childrenContainer) {
-                        if (childrenContainer.style.display === 'none') {
-                            childrenContainer.style.display = 'block';
-                            // Optional: Change icon to open folder
-                        } else {
-                            childrenContainer.style.display = 'none';
-                        }
-                    }
-                };
-
-                container.appendChild(nodeEl);
-                if (childrenContainer) container.appendChild(childrenContainer);
-            }
-        }
-
-        async function sftpSearch() {
-            const query = document.getElementById('sftp-search').value;
-            if (!query) return;
-            const container = document.getElementById('sftp-tree');
-            container.innerHTML = '<div style="padding:10px;">Searching...</div>';
-            
-            try {
-                // Always search from root for global search, ignore current path
-                const res = await fetch(`/api/files/search?session_id=${session_id}&path=/&query=${encodeURIComponent(query)}`);
-                const results = await res.json();
-                
-                container.innerHTML = `<div style="padding:5px; font-weight:bold; border-bottom:1px solid #333; display:flex; justify-content:space-between;">
-                    <span>Global Results: "${query}" (${results.length})</span>
-                    <button onclick="refreshFileTree(currentSftpPath)" style="background:none; border:none; color:#aaa; cursor:pointer;" title="Clear"><i class="fa-solid fa-times"></i></button>
-                </div>`;
-                
-                if (results.length === 0) {
-                    container.innerHTML += '<div style="padding:5px;">No results found</div>';
-                    return;
-                }
-                
-                // Tree View
-                const treeRoot = buildTree(results);
-                const treeContainer = document.createElement('div');
-                createTreeDom(treeRoot, treeContainer, 0);
-                container.appendChild(treeContainer);
-                
-            } catch (e) { 
-                console.error(e);
-                container.innerHTML = '<div style="padding:10px; color:red;">Search failed</div>'; 
-            }
-        }
-
-    </script>
+    <!-- Application Logic -->
+    <script src="/static/js/main.js"></script>
+    <script src="/static/js/ssh.js"></script>
+    <script src="/static/js/files.js"></script>
+    <script src="/static/js/doc.js"></script>
 </body>
 </html>

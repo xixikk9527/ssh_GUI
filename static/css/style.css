@@ -1,0 +1,283 @@
+:root {
+    --bg-color: #1e1e1e;
+    --sidebar-bg: #252526;
+    --item-hover: #2a2d2e;
+    --accent: #007acc;
+    --text-color: #cccccc;
+    --border-color: #333;
+}
+body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; background: var(--bg-color); color: var(--text-color); overflow: hidden; }
+
+/* Utility */
+.hidden { display: none !important; }
+.flex { display: flex; }
+.flex-col { display: flex; flex-direction: column; }
+.h-full { height: 100%; }
+.w-full { width: 100%; }
+
+/* Views */
+.view-container { width: 100%; height: 100%; display: none; }
+.view-container.active { display: flex; }
+
+/* Home View */
+#view-home { justify-content: center; align-items: center; gap: 40px; }
+.card {
+    width: 200px; height: 150px; background: var(--sidebar-bg); border: 1px solid var(--border-color);
+    border-radius: 10px; display: flex; flex-direction: column; justify-content: center; align-items: center;
+    cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; user-select: none;
+}
+.card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.3); background: var(--item-hover); }
+.card i { font-size: 40px; margin-bottom: 15px; color: var(--accent); }
+.card span { font-size: 18px; font-weight: bold; }
+
+/* SSH View */
+#ssh-layout { display: flex; flex-direction: column; height: 100%; width: 100%; }
+#ssh-top-bar { padding: 8px; background: var(--sidebar-bg); border-bottom: 1px solid var(--border-color); display: flex; gap: 10px; align-items: center; }
+#cmd-input { flex: 1; padding: 6px; background: #3c3c3c; border: 1px solid #555; color: white; border-radius: 4px; }
+#ssh-main { flex: 1; display: flex; overflow: hidden; }
+#ssh-sidebar { width: 250px; background: var(--sidebar-bg); border-right: 1px solid var(--border-color); padding: 10px; }
+#ssh-terminal { flex: 1; position: relative; padding: 5px; background: #000; }
+
+.host-info-item { padding: 10px; background: #333; border-radius: 5px; cursor: context-menu; }
+.context-menu {
+    position: fixed; background: #252526; border: 1px solid #454545; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+    z-index: 1000; min-width: 150px; padding: 5px 0; border-radius: 4px;
+}
+.context-menu-item { padding: 8px 15px; cursor: pointer; display: flex; gap: 8px; align-items: center; font-size: 13px; }
+.context-menu-item:hover { background: #094771; color: white; }
+
+/* SFTP View */
+#sftp-layout { display: flex; flex-direction: column; height: 100%; width: 100%; }
+#sftp-toolbar { padding: 8px; background: var(--sidebar-bg); border-bottom: 1px solid var(--border-color); display: flex; gap: 10px; align-items: center; }
+#sftp-main { flex: 1; display: flex; overflow: hidden; }
+#sftp-tree { width: 250px; background: var(--sidebar-bg); overflow-y: auto; border-right: 1px solid var(--border-color); }
+#sftp-editor { flex: 1; position: relative; }
+.file-item { padding: 4px 8px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; display: flex; align-items: center; gap: 6px; border: 1px solid transparent; }
+.file-item:hover { background: var(--item-hover); }
+.file-item.selected { background: #005a9e; color: white; border-color: #007acc; }
+
+/* SFTP Tree Styles */
+.tree-node { cursor: pointer; user-select: none; }
+.tree-content { display: flex; align-items: center; padding: 4px 8px; border-radius: 4px; transition: background 0.2s; }
+.tree-content:hover { background: var(--item-hover); }
+.tree-children { margin-left: 20px; border-left: 1px solid #333; }
+
+/* Command Library Styles - Layout Refinement */
+#cmd-lib-layout { display: flex; flex-direction: column; height: 100%; width: 100%; background: #121212; }
+#cmd-lib-toolbar { padding: 12px 20px; background: #1e1e1e; border-bottom: 1px solid #333; display: flex; align-items: center; gap: 15px; }
+#cmd-lib-main { flex: 1; display: flex; overflow: hidden; }
+
+/* Left Sidebar - Improved */
+#cmd-category-list { 
+    width: 260px; 
+    background: #1e1e1e; 
+    border-right: 1px solid #333; 
+    display: flex; flex-direction: column;
+}
+.category-header { 
+    padding: 18px 20px; font-weight: bold; color: #888; font-size: 11px; 
+    letter-spacing: 1px; text-transform: uppercase; border-bottom: 1px solid #2d2d2d;
+}
+.category-scroll { flex: 1; overflow-y: auto; padding: 10px 0; }
+.category-scroll::-webkit-scrollbar { width: 4px; }
+.category-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+
+.category-item { 
+    padding: 12px 20px; cursor: pointer; font-size: 13px; color: #aaa;
+    display: flex; align-items: center; justify-content: space-between;
+    border-left: 3px solid transparent; transition: all 0.2s;
+}
+.category-item:hover { background: #2a2d2e; color: #fff; }
+.category-item.active { background: #2d2d2d; color: #007acc; border-left-color: #007acc; }
+.category-badge { 
+    background: #333; color: #666; font-size: 10px; padding: 2px 8px; border-radius: 10px; 
+}
+.category-item.active .category-badge { background: #007acc; color: #fff; }
+
+/* Right Content - Better Spacing */
+#cmd-list-container { flex: 1; display: flex; flex-direction: column; background: #121212; }
+#cmd-list-header {
+    padding: 15px 25px; background: #181818; border-bottom: 1px solid #2d2d2d;
+    display: flex; justify-content: space-between; align-items: center;
+}
+#cmd-list { flex: 1; padding: 25px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+
+/* Cards - Fix Empty/Small Box Issue */
+.cmd-card { 
+    background: #1e1e1e; border: 1px solid #2d2d2d; border-radius: 8px; 
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.2s, border-color 0.2s;
+}
+.cmd-card:hover { border-color: #444; transform: translateY(-2px); }
+.cmd-card-header {
+    padding: 12px 20px; border-bottom: 1px solid #2d2d2d;
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 15px;
+}
+.cmd-code-wrap {
+    flex: 1; font-family: 'Consolas', 'Monaco', monospace; color: #4ec9b0; 
+    font-size: 14px; line-height: 1.6; word-break: break-all; white-space: pre-wrap;
+    background: #121212; padding: 10px 15px; border-radius: 6px; border: 1px solid #2d2d2d;
+    min-height: 24px; display: block;
+}
+.cmd-card-body { padding: 15px 20px; color: #999; font-size: 13px; line-height: 1.6; }
+.cmd-actions { display: flex; gap: 10px; flex-shrink: 0; padding-top: 5px; }
+
+.action-btn {
+    background: #333; border: none; color: #ccc; padding: 6px 12px; border-radius: 4px; 
+    cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 6px;
+    transition: all 0.2s;
+}
+.action-btn:hover { background: #444; color: #fff; }
+.action-btn.run { background: #007acc; color: #fff; }
+.action-btn.run:hover { background: #008be5; }
+
+
+
+/* Login Modal */
+#login-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8);
+    z-index: 9999; display: flex; justify-content: center; align-items: center;
+}
+.login-box { background: #252526; padding: 30px; border-radius: 8px; width: 300px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+.login-box h2 { margin-top: 0; text-align: center; color: white; }
+.input-group { margin-bottom: 15px; }
+.input-group label { display: block; margin-bottom: 5px; font-size: 12px; }
+.input-group input { width: 100%; padding: 8px; background: #3c3c3c; border: 1px solid #3c3c3c; color: white; border-radius: 4px; box-sizing: border-box; }
+button.btn-primary { width: 100%; padding: 10px; background: var(--accent); border: none; color: white; border-radius: 4px; cursor: pointer; font-weight: bold; }
+button.btn-primary:hover { background: #0062a3; }
+button { cursor: pointer; }
+
+/* Doc Module Styles */
+.doc-nav-item { padding: 12px 20px; cursor: pointer; color: #aaa; font-size: 13px; display: flex; gap: 10px; align-items: center; border-left: 3px solid transparent; }
+.doc-nav-item:hover { background: #2a2d2e; color: white; }
+.doc-nav-item.active { background: #37373d; color: white; border-left-color: var(--accent); }
+
+.doc-panel { display: none; width: 100%; height: 100%; flex-direction: column; }
+.doc-panel.active { display: flex; }
+.panel-header { padding: 15px 20px; font-size: 18px; font-weight: bold; border-bottom: 1px solid #333; background: #252526; }
+.panel-body { flex: 1; overflow: hidden; position: relative; }
+
+/* Interactive Table */
+.doc-table { width: 100%; border-collapse: collapse; font-size: 13px; color: #ccc; }
+
+.doc-table th { 
+    position: sticky; top: 0; background: #333; 
+    font-weight: bold; color: #eee; text-align: center;
+    user-select: none; z-index: 10;
+    border: 1px solid #444; border-bottom: 2px solid #555;
+    padding: 4px 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; height: 30px; box-sizing: border-box;
+}
+
+.doc-table td { 
+    border: 1px solid #444; padding: 4px 8px; box-sizing: border-box;
+    /* Full Display Styles */
+    white-space: nowrap;        /* Prevent wrap to keep height small */
+    overflow: hidden;           /* Hide overflow */
+    text-overflow: ellipsis;    /* Add ellipsis */
+    height: 30px;               /* Fixed height */
+    max-height: 30px;
+    vertical-align: middle;     /* Align middle */
+    min-width: 100px;           /* Minimum width */
+    max-width: 400px;           /* Max width */
+}
+
+/* Row Number Column Style */
+.doc-table .row-num {
+    width: 50px; min-width: 50px; max-width: 50px;
+    background: #2d2d2d; color: #888; text-align: center;
+    position: sticky; left: 0; z-index: 5;
+    border-right: 2px solid #555;
+    user-select: none;
+    /* Keep row num non-wrapping */
+    white-space: nowrap; word-break: normal;
+}
+.doc-table th.row-num { z-index: 15; background: #333; } /* Corner cell */
+
+/* Column Highlight & Hover */
+.doc-table td.col-hover { background: #333 !important; }
+.doc-table th.col-hover { background: #444 !important; }
+
+/* Active Condition Highlight (Currently Editing) - Bright Blue */
+.doc-table td.col-highlight-active { background: rgba(0, 122, 204, 0.3) !important; }
+.doc-table th.col-highlight-active { background: rgba(0, 122, 204, 0.5) !important; border-bottom-color: #007acc; }
+
+/* Used Condition Highlight (Already Added) - Dim Green/Blue */
+.doc-table td.col-highlight-used { background: rgba(46, 125, 50, 0.2) !important; }
+.doc-table th.col-highlight-used { background: rgba(46, 125, 50, 0.4) !important; border-bottom-color: #2e7d32; }
+
+.doc-table tr:hover td { background: #2a2d2e; } /* Row hover priority lower than col hover if we want crosshair, but usually row is stronger. Let's make col stronger or mix */
+/* To make column hover visible over row hover, we use !important or higher specificity */
+/* Let's try to just use a subtle blend if possible, but CSS blend modes are complex on tables. */
+/* Simple approach: When hovering a cell, JS adds class to all cells in that column */
+
+.doc-table td { background: #1e1e1e; }
+
+.search-highlight { background: #ffff00; color: #000; font-weight: bold; }
+.search-highlight.current { background: #ff9800; outline: 2px solid red; }
+
+/* Diff Module Styles */
+.diff-toolbar { padding: 5px 10px; background: #2d2d2d; border-bottom: 1px solid #333; display: flex; align-items: center; gap: 10px; }
+.sheet-tabs { display: flex; gap: 2px; overflow-x: auto; margin-left: 10px; }
+.sheet-tab { padding: 4px 10px; background: #333; color: #aaa; cursor: pointer; font-size: 12px; border-radius: 4px 4px 0 0; white-space: nowrap; }
+.sheet-tab.active { background: #1e1e1e; color: var(--accent); font-weight: bold; border-top: 2px solid var(--accent); }
+
+/* Fix layout for large tables */
+.diff-preview-container { 
+    height: 300px;              /* Fixed height */
+    overflow-y: auto;           /* Enable vertical scroll */
+    overflow-x: auto;           /* Enable horizontal scroll */
+    position: relative; 
+    background: #1e1e1e;
+    border-bottom: 1px solid #444; /* Separator */
+}
+.empty-state { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #555; }
+
+.badge-source { background: #2e7d32; color: white; padding: 2px 6px; font-size: 10px; border-radius: 3px; }
+.badge-target { background: #c62828; color: white; padding: 2px 6px; font-size: 10px; border-radius: 3px; }
+
+.pagination-bar { 
+    padding: 10px; 
+    border-top: 1px solid #333; 
+    background: #252526; 
+    display: flex; 
+    justify-content: flex-end; 
+    gap: 10px; 
+    font-size: 13px; 
+    align-items: center; 
+    flex-shrink: 0; /* Prevent shrinking */
+    min-height: 40px;
+}
+.pagination-bar button {
+    padding: 5px 15px;
+    background: #3c3c3c;
+    border: 1px solid #555;
+    color: white;
+    border-radius: 4px;
+}
+.pagination-bar button:hover { background: #505050; }
+ .pagination-bar button:disabled { opacity: 0.5; cursor: not-allowed; }
+ .pagination-bar.small { padding: 5px 10px; min-height: 30px; font-size: 11px; }
+
+ /* Context Menu */
+ .context-menu {
+     position: absolute;
+     background: #252526;
+     border: 1px solid #454545;
+     box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+     z-index: 1000;
+     display: none;
+     min-width: 120px;
+ }
+ .context-menu-item {
+     padding: 8px 12px;
+     cursor: pointer;
+     color: #cccccc;
+     font-size: 13px;
+     display: flex;
+     align-items: center;
+     gap: 8px;
+ }
+ .context-menu-item:hover {
+     background: #094771;
+     color: white;
+ }
+ .context-menu-item i { width: 16px; text-align: center; }
