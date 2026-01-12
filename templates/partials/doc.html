@@ -10,6 +10,20 @@
                 <div class="doc-nav-item active" onclick="switchDocPanel('converter')"><i class="fa-solid fa-file-export"></i> 格式转换</div>
                 <div class="doc-nav-item" onclick="switchDocPanel('diff')"><i class="fa-solid fa-code-compare"></i> Excel 对比</div>
                 <div class="doc-nav-item" onclick="switchDocPanel('toolbox')"><i class="fa-solid fa-toolbox"></i> 数据工具箱</div>
+                
+                <!-- Conditions Display Area (Bottom) -->
+                <div id="conditions-display-area" style="margin-top: auto; border-top: 1px solid #333; padding: 10px; background: #1e1e1e; max-height: 200px; overflow-y: auto; display: none;">
+                    <div style="font-size: 11px; font-weight: bold; color: #aaa; margin-bottom: 8px; display: flex; align-items: center; gap: 5px;">
+                        <i class="fa-solid fa-list"></i>
+                        <span>当前条件</span>
+                        <button onclick="toggleConditionsDisplay()" style="background: none; border: none; color: #666; cursor: pointer; margin-left: auto;" title="隐藏">
+                            <i class="fa-solid fa-times"></i>
+                        </button>
+                    </div>
+                    <div id="conditions-display-list" style="font-size: 10px;">
+                        <!-- Conditions will be displayed here -->
+                    </div>
+                </div>
             </div>
             
             <!-- Doc Content Area -->
@@ -83,6 +97,10 @@
                                         <option value="difference_a">仅源文件 (A-B)</option>
                                         <option value="difference_b">仅目标文件 (B-A)</option>
                                     </select>
+                                    <label style="display: flex; align-items: center; gap: 5px; font-size: 11px; color: #aaa; cursor: pointer;">
+                                        <input type="checkbox" id="diff-remove-duplicates" style="cursor: pointer;">
+                                        去除重复行
+                                    </label>
                                 </div>
                                 <button onclick="addDiffCondition()" style="background: none; border: none; color: #007acc; cursor: pointer; font-size: 12px;">+ 添加条件</button>
                             </div>
@@ -113,15 +131,91 @@
                 <!-- Panel 3: Toolbox -->
                 <div id="doc-panel-toolbox" class="doc-panel">
                     <div class="panel-header">数据工具箱</div>
-                    <div class="panel-body" style="display: flex; flex-direction: column;">
-                        <div class="toolbar" style="padding: 10px; border-bottom: 1px solid #333;">
-                             <input type="file" id="toolbox-file" accept=".xlsx, .xls, .csv" onchange="loadToolboxFile(this)">
-                             <span style="margin-left: 10px; color: #aaa;">工具即将推出：去重、统计...</span>
+                    <div class="panel-body" style="display: flex; flex-direction: column; height: 100%;">
+                        <!-- 文件上传区 -->
+                        <div class="toolbar" style="padding: 10px; border-bottom: 1px solid #333; display: flex; align-items: center; gap: 10px;">
+                            <input type="file" id="toolbox-file" accept=".xlsx, .xls, .csv" onchange="loadToolboxFile(this)" style="display: none;">
+                            <button onclick="document.getElementById('toolbox-file').click()" class="btn btn-primary">
+                                <i class="fa-solid fa-upload"></i> 上传文件
+                            </button>
+                            <span id="toolbox-filename" style="color: #aaa; font-size: 12px;">未选择文件</span>
+                            <select id="toolbox-sheet-select" style="background:#333; color:white; border:1px solid #555; padding: 5px; display: none;" onchange="switchToolboxSheet()">
+                            </select>
                         </div>
-                        <div id="toolbox-preview-container" style="flex: 1; overflow: auto; padding: 10px;">
-                             <div class="empty-state">上传文件以预览</div>
+                        
+                        <!-- 主内容区：左侧工具菜单 + 右侧预览 -->
+                        <div style="display: flex; flex: 1; overflow: hidden;">
+                            <!-- 左侧工具菜单 -->
+                            <div id="toolbox-menu" style="width: 220px; border-right: 1px solid #333; overflow-y: auto; padding: 10px; display: none;">
+                                <!-- 数据清洗 -->
+                                <div class="toolbox-category">
+                                    <div class="toolbox-category-title"><i class="fa-solid fa-broom"></i> 数据清洗</div>
+                                    <div class="toolbox-btn-grid">
+                                        <button class="toolbox-btn" data-tool="dedupe" onclick="showToolPanel('dedupe', this)"><i class="fa-solid fa-copy"></i><span>去重</span></button>
+                                        <button class="toolbox-btn" data-tool="empty" onclick="showToolPanel('empty', this)"><i class="fa-solid fa-eraser"></i><span>空值处理</span></button>
+                                        <button class="toolbox-btn" data-tool="trim" onclick="showToolPanel('trim', this)"><i class="fa-solid fa-scissors"></i><span>数据修剪</span></button>
+                                        <button class="toolbox-btn" data-tool="replace" onclick="showToolPanel('replace', this)"><i class="fa-solid fa-magnifying-glass"></i><span>查找替换</span></button>
+                                    </div>
+                                </div>
+                                <!-- 数据转换 -->
+                                <div class="toolbox-category">
+                                    <div class="toolbox-category-title"><i class="fa-solid fa-shuffle"></i> 数据转换</div>
+                                    <div class="toolbox-btn-grid">
+                                        <button class="toolbox-btn" data-tool="split" onclick="showToolPanel('split', this)"><i class="fa-solid fa-arrows-split-up-and-left"></i><span>列拆分</span></button>
+                                        <button class="toolbox-btn" data-tool="merge" onclick="showToolPanel('merge', this)"><i class="fa-solid fa-compress"></i><span>列合并</span></button>
+                                        <button class="toolbox-btn" data-tool="rename" onclick="showToolPanel('rename', this)"><i class="fa-solid fa-pen"></i><span>列重命名</span></button>
+                                    </div>
+                                </div>
+                                <!-- 数据筛选 -->
+                                <div class="toolbox-category">
+                                    <div class="toolbox-category-title"><i class="fa-solid fa-filter"></i> 数据筛选</div>
+                                    <div class="toolbox-btn-grid">
+                                        <button class="toolbox-btn" data-tool="filter" onclick="showToolPanel('filter', this)"><i class="fa-solid fa-filter-circle-xmark"></i><span>条件筛选</span></button>
+                                        <button class="toolbox-btn" data-tool="sample" onclick="showToolPanel('sample', this)"><i class="fa-solid fa-dice"></i><span>随机抽样</span></button>
+                                    </div>
+                                </div>
+                                <!-- 数据统计 -->
+                                <div class="toolbox-category">
+                                    <div class="toolbox-category-title"><i class="fa-solid fa-chart-simple"></i> 数据统计</div>
+                                    <div class="toolbox-btn-grid">
+                                        <button class="toolbox-btn" data-tool="overview" onclick="showToolPanel('overview', this)"><i class="fa-solid fa-eye"></i><span>数据概览</span></button>
+                                        <button class="toolbox-btn" data-tool="groupby" onclick="showToolPanel('groupby', this)"><i class="fa-solid fa-layer-group"></i><span>分组统计</span></button>
+                                    </div>
+                                </div>
+                                <!-- 文件操作 -->
+                                <div class="toolbox-category">
+                                    <div class="toolbox-category-title"><i class="fa-solid fa-file"></i> 文件操作</div>
+                                    <div class="toolbox-btn-grid">
+                                        <button class="toolbox-btn" data-tool="mergeSheets" onclick="showToolPanel('mergeSheets', this)"><i class="fa-solid fa-object-group"></i><span>合并Sheet</span></button>
+                                        <button class="toolbox-btn" data-tool="splitSheet" onclick="showToolPanel('splitSheet', this)"><i class="fa-solid fa-object-ungroup"></i><span>拆分Sheet</span></button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 右侧内容区 -->
+                            <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden;">
+                                <!-- 工具操作面板 -->
+                                <div id="toolbox-tool-panel" style="border-bottom: 1px solid #333; padding: 10px; display: none; background: #1a1a1a;">
+                                    <!-- 动态加载工具面板内容 -->
+                                </div>
+                                
+                                <!-- 数据预览区 -->
+                                <div id="toolbox-preview-container" style="flex: 1; overflow: auto; padding: 10px;">
+                                    <div class="empty-state">
+                                        <i class="fa-solid fa-toolbox" style="font-size: 48px; color: #444; margin-bottom: 10px;"></i>
+                                        <div>上传Excel或CSV文件开始使用数据工具</div>
+                                    </div>
+                                </div>
+                                
+                                <!-- 分页和操作栏 -->
+                                <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px; border-top: 1px solid #333;">
+                                    <div id="toolbox-pagination" class="pagination-bar"></div>
+                                    <button id="toolbox-download-btn" onclick="downloadToolboxResult()" class="btn btn-success" style="display: none;">
+                                        <i class="fa-solid fa-download"></i> 下载结果
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                        <div id="toolbox-pagination" class="pagination-bar"></div>
                     </div>
                 </div>
 

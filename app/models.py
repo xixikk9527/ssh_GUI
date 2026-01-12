@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import List, Dict, Any
+from datetime import datetime
 
 class ConnectionRequest(BaseModel):
     hostname: str
@@ -30,4 +31,31 @@ class DiffRunRequest(BaseModel):
     file_id_b: str
     sheet_b: str
     conditions: List[DiffCondition]
-    mode: str = "intersection" # intersection, difference_a, difference_b
+    mode: str = "intersection"
+    remove_duplicates: bool = False
+
+class TaskEvent(BaseModel):
+    type: str
+    time: float
+    x: int = None
+    y: int = None
+    button: str = None
+    pressed: bool = None
+    dx: int = None
+    dy: int = None
+    key: str = None
+
+class AutomationTask(BaseModel):
+    id: str
+    name: str
+    created_at: str
+    duration: float
+    events: List[TaskEvent]
+
+class TaskCreateRequest(BaseModel):
+    name: str = None
+    record_mouse_move: bool = False  # 是否记录鼠标移动轨迹
+
+class TaskExecuteRequest(BaseModel):
+    speed: float = 1.0  # 播放速度 0.5/1/2/5
+    loop_count: int = 1  # 循环次数

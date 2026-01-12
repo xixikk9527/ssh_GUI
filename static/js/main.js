@@ -89,6 +89,11 @@ function handleHomeAction(action) {
         }
     } else if (action === 'doc') {
         switchView('doc');
+    } else if (action === 'automation') {
+        if (typeof initAutomation === 'function') {
+            initAutomation();
+        }
+        switchView('automation');
     }
 }
 

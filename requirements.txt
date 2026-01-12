@@ -5,3 +5,8 @@ websockets
 jinja2
 python-multipart
 aiofiles
+pynput
+pyautogui
+pywin32
+pillow
+keyboard

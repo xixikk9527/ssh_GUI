@@ -1,0 +1,182 @@
+<!-- 简化的自动化模块UI -->
+<div id="view-automation" class="view-container">
+    <div class="automation-layout">
+        <!-- Header -->
+        <div class="automation-header">
+            <div class="header-left">
+                <button onclick="switchView('home')" class="btn-back" title="返回主页">
+                    <i class="fa-solid fa-home"></i>
+                </button>
+                <h2><i class="fa-solid fa-robot"></i> 自动化任务</h2>
+            </div>
+            <div class="header-right">
+                <label class="checkbox-label" title="记录鼠标移动轨迹（会增加事件数量）">
+                    <input type="checkbox" id="record-mouse-move">
+                    <span>记录鼠标轨迹</span>
+                </label>
+                <button id="btn-start-recording" onclick="startRecording()" class="btn btn-record">
+                    <i class="fa-solid fa-circle"></i> 开始录制
+                </button>
+            </div>
+        </div>
+        
+        <!-- Task List -->
+        <div class="automation-content">
+            <div class="task-list-header">
+                <span>已保存的任务</span>
+                <button onclick="refreshTaskList()" class="btn-icon" title="刷新">
+                    <i class="fa-solid fa-refresh"></i>
+                </button>
+            </div>
+            
+            <!-- 播放控制提示 -->
+            <div class="play-controls-hint">
+                <i class="fa-solid fa-info-circle"></i>
+                执行时按 ESC 可中断
+            </div>
+            
+            <div id="task-list" class="task-list">
+                <div class="empty-state">
+                    <i class="fa-solid fa-robot" style="font-size: 48px; color: #444; margin-bottom: 15px;"></i>
+                    <div>暂无任务</div>
+                    <div style="font-size: 12px; color: #666; margin-top: 5px;">点击"开始录制"创建第一个自动化任务</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recording Status Overlay -->
+        <div id="recording-overlay" class="recording-overlay" style="display: none;">
+            <div class="recording-status">
+                <div class="recording-indicator">
+                    <span class="recording-dot"></span>
+                    <span>正在录制中...</span>
+                </div>
+                <div class="recording-hint">按 ESC 键停止录制</div>
+                <button onclick="stopRecording()" class="btn btn-danger">
+                    <i class="fa-solid fa-stop"></i> 停止录制
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Rename Modal -->
+    <div id="task-rename-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-pen"></i> 重命名任务</h3>
+                <button onclick="closeRenameModal()" class="btn-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="task-new-name" placeholder="输入新名称" 
+                       style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeRenameModal()" style="background: #666; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                    取消
+                </button>
+                <button onclick="confirmRename()" style="background: #007acc; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                    确认
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Execute Settings Modal -->
+    <div id="execute-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-play"></i> 执行设置</h3>
+                <button onclick="closeExecuteModal()" class="btn-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="execute-settings">
+                    <div class="setting-row">
+                        <label>播放速度</label>
+                        <div class="setting-input">
+                            <input type="number" id="exec-speed" value="1" min="0.1" max="10" step="0.1">
+                            <span class="unit">x</span>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <label>循环次数</label>
+                        <div class="setting-input">
+                            <input type="number" id="exec-loop" value="1" min="1" max="999" step="1">
+                            <span class="unit">次</span>
+                        </div>
+                    </div>
+                    <div class="setting-hint">
+                        <i class="fa-solid fa-info-circle"></i>
+                        执行时按 ESC 可中断
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeExecuteModal()" class="btn-cancel">取消</button>
+                <button onclick="confirmExecute()" class="btn-execute-confirm">
+                    <i class="fa-solid fa-play"></i> 开始执行
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Task Edit Modal -->
+    <div id="task-edit-modal" class="modal" style="display: none;">
+        <div class="modal-content task-editor">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-edit"></i> 编辑任务</h3>
+                <button onclick="closeEditModal()" class="btn-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="editor-toolbar">
+                    <button onclick="addNewEvent()" class="btn-add-event">
+                        <i class="fa-solid fa-plus"></i> 添加步骤
+                    </button>
+                </div>
+                <div id="event-list" class="event-list"></div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeEditModal()" class="btn-cancel">取消</button>
+                <button onclick="saveTask()" class="btn-save">
+                    <i class="fa-solid fa-save"></i> 保存
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Event Edit Modal -->
+    <div id="event-edit-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-pen"></i> 编辑步骤</h3>
+                <button onclick="closeEventEditModal()" class="btn-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="event-form">
+                    <div class="param-row">
+                        <label>类型</label>
+                        <select id="event-type" onchange="updateEventForm(this.value)">
+                            <option value="mouse_click">鼠标点击</option>
+                            <option value="mouse_move">鼠标移动</option>
+                            <option value="mouse_scroll">鼠标滚轮</option>
+                            <option value="key_press">按键按下</option>
+                            <option value="key_release">按键释放</option>
+                            <option value="wait">等待</option>
+                            <option value="input_text">输入文本</option>
+                        </select>
+                    </div>
+                    <div class="param-row">
+                        <label>时间(秒)</label>
+                        <input type="number" id="event-time" value="0" step="0.01" min="0">
+                    </div>
+                    <div id="event-params"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeEventEditModal()" class="btn-cancel">取消</button>
+                <button onclick="saveEvent()" class="btn-save">
+                    <i class="fa-solid fa-check"></i> 确定
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

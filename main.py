@@ -4,7 +4,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.routers import system, files, doc
+from app.routers import system, files, doc, automation
 
 app = FastAPI()
 
@@ -26,6 +26,7 @@ templates = Jinja2Templates(directory="templates")
 app.include_router(system.router)
 app.include_router(files.router)
 app.include_router(doc.router)
+app.include_router(automation.router)
 
 @app.get("/")
 async def get(request: Request):
